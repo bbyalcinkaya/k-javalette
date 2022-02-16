@@ -1,7 +1,6 @@
-module JAVALETTE-SYNTAX 
-    imports ID 
-    imports INT
-
+module JAVALETTE-SYNTAX
+    imports DOMAINS-SYNTAX
+    
     syntax Id ::= "main" [token]
     syntax Program ::= List{TopDef, ""}
     syntax TopDef ::= Type Id "(" Params ")" Block
@@ -9,58 +8,71 @@ module JAVALETTE-SYNTAX
     syntax Params ::= List{Param, ","}
     syntax Param ::= Type Id 
 
-    syntax Stmt ::= Block
-                  | Stmt Stmt [right]
-                  | ";"
-                  | Exp ";" [strict]  // TODO expression stmt
-                  // variable declaration
-                  // | Type DeclItems ";"    
-                  | Type Id "=" Exp ";" [strict(3)]
-                    
-                  // assignment
-                  | Id "=" Exp ";"                      [strict(2)]
-                  
-                  
-                  | Id "++" ";"
-                  | Id "--" ";"
-                  
-                  | "return" Exp ";"  [strict]
-                  // | "return" ; // TODO empty return for void funcs  
-                
-                // control flow
-                  | "if" "(" Exp ")" Block               [strict(1)]
-                  | "if" "(" Exp ")" Block "else" Block   [strict(1)]
-                  | "while" "(" Exp ")" Block            
+    /// STATEMENTS
 
+    // Empty statement
+    syntax Stmt ::= ";"
     
-    syntax Block ::= "{" Stmt "}" 
-                   | "{" "}"
+    // Block statement
+    syntax Stmt ::= Block
+    syntax Block ::= "{" Stmts "}"
+    syntax Stmts ::= List{Stmt, ""}
 
-    // syntax DeclItems ::= List{DeclItem, ","}
-    // syntax DeclItem ::= Id 
-    //                   | Id "=" Exp 
+    // Variable declaration
+    syntax Stmt ::= Type DeclItems ";"
+    syntax DeclItems ::= List{DeclItem, ","}
+    syntax DeclItem ::= Id 
+                      | Id "=" Exp  [strict(2)]
+    
+    
+    // Assignment
+    syntax Stmt ::= Id "=" Exp ";"  [strict(2)]
+                  | Id "++" ";" [macro] 
+                  | Id "--" ";" [macro] 
+    rule I:Id ++ ; => I = I + 1 ; 
+    rule I:Id -- ; => I = I - 1 ;
+                  
+    // Return
+    syntax Stmt ::= "return" ";"
+                  | "return" Exp ";" [strict]
 
-    syntax KResult ::= Int 
-    // syntax Value ::= KResult 
-    // syntax Values ::= List{Value, ","}
-    syntax Exp ::= Int | Id 
-                // TODO
-                // | Double 
-                // | "true" | "false"
-                // | String
-                 | "(" Exp ")"            [bracket]
+    // Control flow
+    syntax Stmt ::= "if" "(" Exp ")" Stmt "else" Stmt    [strict(1)]
+                  | "if" "(" Exp ")" Stmt                [macro]
+                  | "while" "(" Exp ")" Stmt            
+    rule if (E) S => if (E) S else { .Stmts }
+    
+    // Expression statement
+    syntax Stmt ::= Exp ";" [strict]
+    
+    /// TYPES
+    syntax Type ::= "int"
+                  | "double"
+                  | "boolean"
+                  | "void"
+                  
+    syntax Float [hook(FLOAT.Float)]
+    syntax Float ::= r"[0-9]+\\.[0-9]+([eE][\\+-]?[0-9]+)?" [token]//, prec(2)]
+  
+    syntax Exp ::= Id 
+                 | "true" | "false"
+                 | Int                          
+                 | Float
+                 > "(" Exp ")"                  [bracket]
                  > "readInt" "(" ")"
-                 | "printInt" "(" Exp ")" [strict]
+                 | "printInt" "(" Exp ")"       [strict]
+                 | "printString" "(" String ")" [strict]
+                 | "printDouble" "(" Exp ")"    [strict]
                  | Id "(" Args ")"        
                  > "-" Exp              
                  | "!" Exp  
                  
-                 > Exp "*" Exp          [left, strict]
-                 | Exp "/" Exp          [left, strict]
-                 | Exp "%" Exp          [left, strict]
+                 > Exp "*" Exp           [left, strict]
+                 | Exp "/" Exp           [left, strict]
+                 | Exp "%" Exp           [left, strict]
         
-                 > Exp "+" Exp          [left, strict]
-                 | Exp "-" Exp          [left, strict]
+                 > Exp "+" Exp           [left, strict]
+                 | Exp "-" Exp           [left, strict]
                 
                  > Exp "==" Exp          [left, strict]
                  | Exp "!=" Exp          [left, strict]
@@ -69,15 +81,9 @@ module JAVALETTE-SYNTAX
                  | Exp "<=" Exp          [left, strict]
                  | Exp "<"  Exp          [left, strict]
                 
-                 > Exp "&&" Exp         [left, strict(1)]
-                 > Exp "||" Exp         [left, strict(1)]
+                 > Exp "&&" Exp          [left, strict(1)]
+                 > Exp "||" Exp          [left, strict(1)]
 
-    syntax Args ::= List{Exp, ","}      [strict]
-
-    syntax Type ::= "int"
-                // TODO other types
-                //   | "double"
-                //   | "boolean"
-                //   | "void"
+    syntax Args ::= List{Exp, ","}       [strict]
 
 endmodule 

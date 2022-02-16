@@ -1,0 +1,6 @@
+
+javalette-kompiled/
+.krun*
+.kparse*
+
+testsuite/
