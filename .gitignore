@@ -2,5 +2,6 @@
 javalette-kompiled/
 .krun*
 .kparse*
+.kompile*
 
 testsuite/
