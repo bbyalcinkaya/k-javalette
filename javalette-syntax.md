@@ -1,7 +1,9 @@
 
 ```k
 module JAVALETTE-SYNTAX
-    imports DOMAINS-SYNTAX // TODO dont import everything
+    imports ID-SYNTAX
+    imports UNSIGNED-INT-SYNTAX
+    imports STRING-SYNTAX
     
     syntax Id ::= "main" [token]
     syntax Program ::= List{TopDef, ""}
