@@ -18,10 +18,6 @@ module JAVALETTE
     imports JAVALETTE-TYPES
     imports JAVALETTE-RETURNCHECK
     imports JAVALETTE-EXECUTION
-    
-    
-    imports DOMAINS 
-    imports FLOAT
 
 
 ```

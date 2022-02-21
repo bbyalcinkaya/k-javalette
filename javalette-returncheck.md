@@ -6,7 +6,8 @@ module JAVALETTE-RETURNCHECK [private]
 
     imports LIST
     imports BOOL
-
+    imports K-EQUAL
+    
     rule <k> returncheck => retcheckFuns(values(FUNS)) ... </k>
          <funs> FUNS </funs> [structural]
 

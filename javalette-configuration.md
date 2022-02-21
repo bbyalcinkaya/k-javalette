@@ -4,7 +4,8 @@ requires "javalette-syntax.md"
 
 module JAVALETTE-CONFIGURATION 
     imports JAVALETTE-SYNTAX
-    imports DOMAINS
+    imports MAP
+    imports LIST
 
     configuration
         <k> $PGM:Program ~> typecheck ~> returncheck ~> execute_main </k>
