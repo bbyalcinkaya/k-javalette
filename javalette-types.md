@@ -7,6 +7,7 @@ module JAVALETTE-TYPES [private]
     imports JAVALETTE-ENV
 
     imports LIST
+    imports K-EQUAL
 
     rule <k> typecheck => checkFuns(keys_list(FUNS)) ... </k>
          <funs> FUNS </funs> [structural]
@@ -19,8 +20,8 @@ module JAVALETTE-TYPES [private]
 
     
     syntax KItem ::= checkFuns(List)
-    rule <k> checkFuns(.List) => . ... </k>                                             //[structural]
-    rule <k> checkFuns(ListItem(I:Id) Rest) => checkFun(I) ~> checkFuns(Rest) ... </k>      //[structural]
+    rule <k> checkFuns(.List) => . ... </k>                                             [structural]
+    rule <k> checkFuns(ListItem(I:Id) Rest) => checkFun(I) ~> checkFuns(Rest) ... </k>  [structural]
 
 ```
 Initialize the environment (`tenv`) with parameters and check the function body.
@@ -33,6 +34,12 @@ Initialize the environment (`tenv`) with parameters and check the function body.
             <tenv> _ => envMake(Ps) </tenv>
             <retType> _ => T </retType>
         </typecheck>
+        requires noVoidParams(Ps)
+    
+    syntax Bool ::= noVoidParams( Params ) [function,functional]
+    rule noVoidParams(.Params) => true
+    rule noVoidParams(T _, Ps) => (T =/=K void) andBool noVoidParams(Ps)
+    
 ```
 
 ## Statements

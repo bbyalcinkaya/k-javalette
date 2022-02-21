@@ -23,13 +23,11 @@ module JAVALETTE-ENV
     rule envTopContains(                _,    _) => false              [owise]
 
     syntax List ::= envMake(Params) [function]
-    rule envMake(Ps) => ListItem(mkFrame(Ps)) 
-    syntax Map ::= mkFrame(Params)                   [function, private]
-    syntax Map ::= mkFrameAcc(Params , Map)          [function, private]
-    rule mkFrame( Ps:Params ) => mkFrameAcc(Ps , .Map)
-    rule mkFrameAcc( .Params , Acc ) => Acc 
-    rule mkFrameAcc( (T:Type V:Id , Ps:Params) , Acc:Map ) 
-            => mkFrameAcc(Ps, (V |-> T) Acc) requires notBool (V in_keys(Acc))
+    rule envMake(Ps) => ListItem(mkFrame(Ps, .Map)) 
+    syntax Map ::= mkFrame(Params , Map)          [function, private]
+    rule mkFrame( .Params , Acc ) => Acc 
+    rule mkFrame( (T:Type V:Id , Ps:Params) , Acc:Map ) 
+            => mkFrame(Ps, (V |-> T) Acc) requires notBool (V in_keys(Acc))
 
     syntax List ::= envInsert(Id, Type, List) [function]
     rule envInsert(V, T, ListItem(M:Map) Rest) => ListItem(M[V <- T]) Rest
