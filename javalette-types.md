@@ -65,6 +65,7 @@ Variables can be declared without initial values. If an initial value is given, 
         <k> checkStmt( T:Type V:Id ; ) => . ... </k>
         <tenv> ENV => envInsert(V, T, ENV) </tenv>
         requires notBool(envTopContains(ENV, V))
+                andBool ( T =/=K void )
         
     rule 
         <k> checkStmt( T:Type V:Id = E:Exp ; ) => . ... </k>
