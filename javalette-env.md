@@ -14,8 +14,14 @@ module JAVALETTE-ENV
                                        orBool envContains(As, K)
     rule envContains(_, _) => false [owise]
     
-    syntax Type ::= envLookup(List, KItem) [function]
-    rule envLookup(ListItem(M:Map) _, V)    => {M[V]}:>Type               requires V in_keys(M)
+    syntax Type ::= typeLookup(List, KItem) [function]
+    rule typeLookup(ListItem(M:Map) _, V)    => {M[V]}:>Type               requires V in_keys(M)
+    rule typeLookup(ListItem(_:Map) Rest, V) => typeLookup(Rest, V) [owise]
+
+    syntax KItem ::= stackFrame(KItem, List)
+    
+    syntax Int ::= envLookup(List, KItem) [function]
+    rule envLookup(ListItem(M:Map) _, V)    => {M[V]}:>Int               requires V in_keys(M)
     rule envLookup(ListItem(_:Map) Rest, V) => envLookup(Rest, V) [owise]
 
     syntax Bool ::= envTopContains(List, KItem) [function, functional]

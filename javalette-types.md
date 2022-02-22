@@ -67,6 +67,7 @@ A variable declared in an outer scope may be redeclared in a block;
 the new declaration then shadows the previous declaration for the rest of the block.
 
 Variables can be declared without initial values. If an initial value is given, its type must match the variable type.
+
 ```k
     rule 
         <k> checkStmt( T:Type V:Id ; ) => . ... </k>
@@ -92,7 +93,7 @@ Variables can be declared without initial values. If an initial value is given, 
         <k> checkStmt( V:Id = E:Exp ; ) => . ... </k>
         <tenv> ENV </tenv>
         requires envContains(ENV, V) andBool
-                 checkExp( envLookup(ENV, V) , E)
+                 checkExp( typeLookup(ENV, V) , E)
 ```
 
 ### Return
@@ -118,14 +119,15 @@ Conditions must be `boolean` expressions.
     rule 
         <k> checkStmt( if( E:Exp ) ST:Stmt else SF:Stmt  ) 
                 => 
-            checkStmt(ST) ~> checkStmt(SF) ... 
+            pushTBlock ~> checkStmt(ST) ~> popTBlock ~>
+            pushTBlock ~> checkStmt(SF) ~> popTBlock ... 
         </k>
         requires checkExp(boolean, E)
         
     rule 
         <k> checkStmt( while( E:Exp ) ST:Stmt ) 
                 => 
-            checkStmt(ST) ... 
+            pushTBlock ~> checkStmt(ST) ~> popTBlock ... 
         </k>
         requires checkExp(boolean, E)
 ```
@@ -161,7 +163,7 @@ Inferred type must match the expected type.
 ### Variable
 Lookup the variable's name in the environment.
 ```k
-    rule [[inferExp(V:Id) => envLookup(ENV,V)]]
+    rule [[inferExp(V:Id) => typeLookup(ENV,V)]]
         <tenv> ENV </tenv> 
 ```
 
@@ -219,7 +221,8 @@ Operands must be of the same numeric type.
     rule inferExp( E1:Exp != E2:Exp ) => inferEq(inferExp(E1), E2)
     
     syntax InferRes ::= inferEq(InferRes, Exp) [function, functional]
-    rule inferEq(T:Type, Other:Exp) => boolean requires checkExp(T, Other)
+    rule inferEq(T:Type, Other:Exp) => boolean requires isEquality(T)
+                                                andBool checkExp(T, Other)
     rule inferEq(TypeError, _) => TypeError
 
     rule inferExp( E1:Exp >= E2:Exp ) => inferOrd(inferExp(E1), E2)
@@ -253,6 +256,13 @@ Operands must be of the same numeric type.
     rule isNumeric(int)    => true
     rule isNumeric(double) => true
     rule isNumeric(_) => false      [owise]
+
+    syntax Bool ::= isEquality(InferRes) [function, functional]
+    rule isEquality(int)     => true
+    rule isEquality(double)  => true
+    rule isEquality(boolean) => true
+    rule isEquality(_)       => false [owise]
+    
 
     syntax KItem ::= "pushTBlock"
     syntax KItem ::= "popTBlock"

@@ -4,6 +4,7 @@ module JAVALETTE-SYNTAX
     imports ID-SYNTAX
     imports UNSIGNED-INT-SYNTAX
     imports STRING-SYNTAX
+    imports BOOL-SYNTAX
     
     syntax Id ::= "main" [token]
     syntax Program ::= List{TopDef, ""}
@@ -59,7 +60,7 @@ module JAVALETTE-SYNTAX
     syntax Float ::= r"[0-9]+\\.[0-9]+([eE][\\+-]?[0-9]+)?" [token]//, prec(2)]
   
     syntax Exp ::= Id 
-                 | "true" | "false"
+                 | Bool
                  | Int                          
                  | Float
                  > "(" Exp ")"                  [bracket]
@@ -68,23 +69,23 @@ module JAVALETTE-SYNTAX
                  | "printInt" "(" Exp ")"       [strict]
                  | "printString" "(" String ")" [strict]
                  | "printDouble" "(" Exp ")"    [strict]
-                 | Id "(" Args ")"        
-                 > "-" Exp              
-                 | "!" Exp  
+                 | Id "(" Args ")"      [strict(2)]  
+                 > "-" Exp              [strict]     
+                 | "!" Exp              [strict]
                  
-                 > Exp "*" Exp           [left, strict]
-                 | Exp "/" Exp           [left, strict]
-                 | Exp "%" Exp           [left, strict]
+                 > Exp "*" Exp           [left, seqstrict]
+                 | Exp "/" Exp           [left, seqstrict]
+                 | Exp "%" Exp           [left, seqstrict]
         
-                 > Exp "+" Exp           [left, strict]
-                 | Exp "-" Exp           [left, strict]
+                 > Exp "+" Exp           [left, seqstrict]
+                 | Exp "-" Exp           [left, seqstrict]
                 
-                 > Exp "==" Exp          [left, strict]
-                 | Exp "!=" Exp          [left, strict]
-                 | Exp ">=" Exp          [left, strict]
-                 | Exp ">"  Exp          [left, strict]
-                 | Exp "<=" Exp          [left, strict]
-                 | Exp "<"  Exp          [left, strict]
+                 > Exp "==" Exp          [left, seqstrict]
+                 | Exp "!=" Exp          [left, seqstrict]
+                 | Exp ">=" Exp          [left, seqstrict]
+                 | Exp ">"  Exp          [left, seqstrict]
+                 | Exp "<=" Exp          [left, seqstrict]
+                 | Exp "<"  Exp          [left, seqstrict]
                 
                  > Exp "&&" Exp          [left, strict(1)]
                  > Exp "||" Exp          [left, strict(1)]
