@@ -4,7 +4,9 @@ module JAVALETTE-EXECUTION
     imports INT
     imports FLOAT
     imports BOOL
-    
+    imports STRING
+    imports K-IO
+
     imports JAVALETTE-CONFIGURATION
     imports JAVALETTE-SYNTAX
     imports JAVALETTE-ENV
@@ -104,17 +106,32 @@ In `a && b` and `a || b`, if `a` evaluates to `false`, `b` is not evaluated.
 ### Function call
 ```k
 
+    syntax KItem ::= applyFun( Id )
+    rule <k> FUN:Id ( As ) => evalArgList(As) ~> applyFun( FUN ) ... </k> 
     rule 
-        <k> FUN:Id ( As:Values) ~> Rest => 
+        <k> As:Values ~> applyFun(FUN:Id) ~> REST => 
             
-            declareArgs(Ps, As) ~> BODY ~> return ; ~> .
+            declareArgs(Ps, As) ~> 
+            BODY ~> return ; 
         </k>
-        <env> ENV => ListItem(.Map) .List </env>
+        <env> ENV => ListItem(.Map) </env>
         <funs> ... FUN |-> (_TYPE FUN ( Ps ) BODY) ... </funs>
-        <stack> ST => ListItem(stackFrame(Rest, ENV)) ST </stack>    
-    rule <k> .Args => .Values ... </k>
-   
-   
+        //<stack> STACK => STACK </stack>    
+        <stack> .List => ListItem( StackItem(REST, ENV) ) ... </stack>    
+    
+    
+    //rule <k> .Args => .Values ... </k>
+    syntax KItem ::= evalArgList(Args)
+    syntax KItem ::= evalArgTail(Args) 
+    syntax KItem ::= evalArgHead(Value)
+
+    rule <k> evalArgList(.Args) => .Values ... </k>
+    rule <k> evalArgList(A , As) => A ~> evalArgTail(As) ... </k>
+    rule <k> V:Value ~> evalArgTail(As) => evalArgList(As) ~> evalArgHead(V) ... </k>
+    rule <k> Vs:Values ~> evalArgHead(V:Value) => (V, Vs):Values ... </k>
+    
+    
+    
 
 ```
 Declare parameters as local variables and assign arguments as initial values.
@@ -127,12 +144,20 @@ Declare parameters as local variables and assign arguments as initial values.
 
 ```k
     
-    rule <k> printInt(_)    => nothing ... </k>
-    rule <k> printDouble(_) => nothing ... </k>
-    rule <k> printString(_) => nothing ... </k>
+    rule <k> printInt(I:Int) => writeln(Int2String(I)) ... </k>
+    rule <k> printDouble(D:Float) => writeln(Float2String(D)) ... </k>
+    rule <k> printString(S:String) => writeln(S) ... </k>
     rule <k> readInt() => 0 ... </k>
     rule <k> readDouble() => 0.0 ... </k>
     
+    syntax KItem ::= writeln(String)
+    rule <k> writeln(S) => 
+        #write(#stdout, S) ~> 
+        #write(#stdout, "\n") ~> 
+        nothing ... 
+    </k>
+    
+
 ```
 
 ## Statements
@@ -213,7 +238,7 @@ Declare parameters as local variables and assign arguments as initial values.
 ```k
     rule 
         <k> return V ; ~> _ => V ~> Rest </k>
-        <stack> ListItem(stackFrame(Rest, ENV)) => .List ... </stack>
+        <stack> ListItem( StackItem(Rest, ENV) ) => .List ... </stack>
         <env> _ => ENV </env>
 
     rule 

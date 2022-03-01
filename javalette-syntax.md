@@ -67,9 +67,9 @@ module JAVALETTE-SYNTAX
                  > "readInt" "(" ")"
                  | "readDouble" "(" ")"
                  | "printInt" "(" Exp ")"       [strict]
-                 | "printString" "(" String ")" [strict]
+                 | "printString" "(" String ")"
                  | "printDouble" "(" Exp ")"    [strict]
-                 | Id "(" Args ")"      [strict(2)]  
+                 | Id "(" Args ")" 
                  > "-" Exp              [strict]     
                  | "!" Exp              [strict]
                  

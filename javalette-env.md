@@ -18,7 +18,7 @@ module JAVALETTE-ENV
     rule typeLookup(ListItem(M:Map) _, V)    => {M[V]}:>Type               requires V in_keys(M)
     rule typeLookup(ListItem(_:Map) Rest, V) => typeLookup(Rest, V) [owise]
 
-    syntax KItem ::= stackFrame(KItem, List)
+    syntax KItem ::= StackItem(K, List)
     
     syntax Int ::= envLookup(List, KItem) [function]
     rule envLookup(ListItem(M:Map) _, V)    => {M[V]}:>Int               requires V in_keys(M)
