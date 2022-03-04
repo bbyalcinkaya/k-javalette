@@ -6,6 +6,7 @@ module JAVALETTE-CONFIGURATION
     imports JAVALETTE-SYNTAX
     imports MAP
     imports LIST
+    imports K-IO
 
     configuration
         <k> $PGM:Program ~> typecheck ~> returncheck ~> execute_main </k>
@@ -14,8 +15,6 @@ module JAVALETTE-CONFIGURATION
             <env> .List </env>
             <stack> .List </stack>
             <store> .Map </store>
-            // <input  stream="stdin" > .List </input>
-            // <output stream="stdout"> .List </output>
         </exec>
         <typecheck>
             <retType> void </retType>
@@ -24,6 +23,8 @@ module JAVALETTE-CONFIGURATION
         <status-code exit=""> 1 </status-code>
         <flag-run multiplicity="?" > $RUN:Int </flag-run>
 
+        //<input  stream="stdin" > .List </input>
+        <output stream="stdout"> .List </output>
 
         
     

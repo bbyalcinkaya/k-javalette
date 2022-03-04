@@ -1,23 +1,19 @@
 
 ```k
+requires "javalette-io.md"
+
 module JAVALETTE-EXECUTION
     imports INT
     imports FLOAT
     imports BOOL
     imports STRING
-    imports K-IO
 
     imports JAVALETTE-CONFIGURATION
     imports JAVALETTE-SYNTAX
     imports JAVALETTE-ENV
+    imports JAVALETTE-IO
 
-    syntax KResult ::= Value
-                     | Values
-    syntax Value ::= Int
-                   | Float 
-                   | Bool  
-                   | "nothing"
-
+    
     syntax Values ::= List{Value, ","}
     syntax Exp ::= KResult
 
@@ -75,9 +71,11 @@ In binary operations, evaluation order is from left to right.
     
     rule <k> I1:Int == I2 => I1 ==Int I2 ... </k>
     rule <k> I1:Float == I2 => I1 ==Float I2 ... </k>
+    rule <k> I1:Bool == I2 => I1 ==Bool I2 ... </k>
     
     rule <k> I1:Int != I2 => I1 =/=Int I2 ... </k>
     rule <k> I1:Float != I2 => I1 =/=Float I2 ... </k>
+    rule <k> I1:Bool != I2 => I1 =/=Bool I2 ... </k>
 ```
 ### Logic operators
 In `a && b` and `a || b`, if `a` evaluates to `false`, `b` is not evaluated. 
@@ -88,8 +86,8 @@ In `a && b` and `a || b`, if `a` evaluates to `false`, `b` is not evaluated.
     rule <k> false:Value || E => E ...    </k> 
     rule <k> true:Value  || _ => true:Value ... </k>
 
-    rule <k> ! true:Value   => false:Value </k>
-    rule <k> ! false:Value  => true:Value </k>
+    rule <k> ! true:Value   => false:Value ... </k>
+    rule <k> ! false:Value  => true:Value ... </k>
 ```
 
 ### Variable lookup
@@ -129,9 +127,6 @@ In `a && b` and `a || b`, if `a` evaluates to `false`, `b` is not evaluated.
     rule <k> evalArgList(A , As) => A ~> evalArgTail(As) ... </k>
     rule <k> V:Value ~> evalArgTail(As) => evalArgList(As) ~> evalArgHead(V) ... </k>
     rule <k> Vs:Values ~> evalArgHead(V:Value) => (V, Vs):Values ... </k>
-    
-    
-    
 
 ```
 Declare parameters as local variables and assign arguments as initial values.
@@ -144,20 +139,24 @@ Declare parameters as local variables and assign arguments as initial values.
 
 ```k
     
-    rule <k> printInt(I:Int) => writeln(Int2String(I)) ... </k>
-    rule <k> printDouble(D:Float) => writeln(Float2String(D)) ... </k>
+    rule <k> printInt(I:Int) => writeln(I) ... </k>
+    rule <k> printDouble(D:Float) => writeln(formatDouble(D)) ... </k>
     rule <k> printString(S:String) => writeln(S) ... </k>
-    rule <k> readInt() => 0 ... </k>
-    rule <k> readDouble() => 0.0 ... </k>
     
-    syntax KItem ::= writeln(String)
-    rule <k> writeln(S) => 
-        #write(#stdout, S) ~> 
-        #write(#stdout, "\n") ~> 
-        nothing ... 
-    </k>
+    syntax KItem ::= writeln(KItem)
+    rule 
+        <k> writeln(S) => nothing ... </k>
+        <output>... .List => ListItem(S) ListItem("\n") </output>
     
+    rule <k> readInt() => getStdinInt() ... </k>
+    rule <k> readDouble() => getStdinFloat() ... </k>
+    
+        
+                                         
 
+    
+      
+    
 ```
 
 ## Statements
@@ -187,10 +186,14 @@ Declare parameters as local variables and assign arguments as initial values.
 
 ```k
 
+    syntax KItem ::= varInit(Id)
+    rule <k> _:Type V:Id = E:Exp ; => E ~> varInit(V) ... </k>
     rule 
-        <k> _:Type V:Id = E:Value ; => . ... </k>
-        <env> ListItem(M) Rest => ListItem(M[V <- !I:Int]) Rest </env>
-        <store> S => S[ !I <- E ] </store>
+        <k> Val:Value ~> varInit(Var) => . ... </k>
+        <env> ListItem(M) Rest => ListItem(M[Var <- !I:Int]) Rest </env>
+        <store> S => S[ !I <- Val ] </store>
+
+
 
     rule <k> T:Type V:Id ; => T V = defaultValue(T) ; ... </k> [structural]
         

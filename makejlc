@@ -1,0 +1,9 @@
+#!/bin/bash
+
+dir=$(pwd)
+echo "#!/bin/bash" > jlc 
+echo "dir=$dir" >> jlc 
+echo "bash $dir/runner $dir \$1" >> jlc 
+
+
+chmod +x jlc

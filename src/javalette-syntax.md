@@ -27,7 +27,7 @@ module JAVALETTE-SYNTAX
     syntax Stmt ::= Type DeclItems ";"
     syntax DeclItems ::= List{DeclItem, ","}
     syntax DeclItem ::= Id 
-                      | Id "=" Exp  [strict(2)]
+                      | Id "=" Exp // [strict(2)]
     
     
     // Assignment
@@ -91,6 +91,13 @@ module JAVALETTE-SYNTAX
                  > Exp "||" Exp          [left, strict(1)]
 
     syntax Args ::= List{Exp, ","}       [strict]
+
+    syntax KResult ::= Value
+    
+    syntax Value ::= Int
+                   | Float 
+                   | Bool  
+                   | "nothing"
 
 endmodule 
 ```

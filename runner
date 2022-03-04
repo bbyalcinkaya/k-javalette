@@ -1,0 +1,39 @@
+#!/bin/bash
+dir=$1
+temp_file=$(mktemp)
+source_file=""
+
+delete_source=0
+
+if [ "$#" -ne 2  ]; then
+    #echo "from stdin" 
+    source_file=$(mktemp)
+    tee > ${source_file}
+    delete_source=1
+else 
+    #echo "from file"
+    #echo $1
+    source_file=$2
+fi
+
+
+krun ${source_file} -cRUN=1 --output-file ${temp_file} --directory ${dir}
+
+exit_code=$?
+if [ $exit_code != 0 ]
+then
+    echo "ERROR"    >/dev/stderr
+    cat $temp_file  >/dev/stderr
+else
+    echo "OK"    >/dev/stderr
+
+fi 
+
+rm $temp_file
+if [ $delete_source == 1 ] 
+then
+    # echo "delete source" $source_file
+    rm $source_file
+fi 
+
+exit $exit_code
