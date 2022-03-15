@@ -1,12 +1,19 @@
  
-## Execution
 
-## Return checking
-write comments
+## Extensions
 
-## Execution
+try this for syntax:
 
-* Implement argument list evaluation
-* Write Evaluation order test
-* Implement I/O functions
-  * write I/O eval. order tests
+   core-syntax
+      |    \
+      |     \
+      |     array-syntax
+      |     /
+    javalette-syntax
+
+
+## Issue
+
+new Foo[...]
+   
+testsuite/extensions/arrays1/array009.jl:3:19:3:21:syntax error, unexpected [A-Z][a-zA-Z0-9]*, expecting boolean or double or int or void

@@ -22,7 +22,9 @@ module JAVALETTE-IO
         requires findChar(C, " \t\n", 0) ==Int -1
     
 
-
+    syntax K ::= writeln(String)    [function]
+    rule writeln(S) => #write(#stdout, S +String "\n")
+    
     rule getStdinStringH(C:String) => C +String getStdinStringH( #read( #stdin , 1 ) )
         requires findChar(C, " \t\n", 0) ==Int -1
     rule getStdinStringH(C:String) => ""
@@ -36,6 +38,7 @@ module JAVALETTE-IO
     syntax Float ::= getStdinFloat( ) [function]
     rule getStdinFloat( ) => String2Float(getStdinString( ) )
 
+    
 
     syntax String ::= formatDouble(Float) [function,functional]
     syntax Int ::= fDoubleL(Float) [function,functional,private]

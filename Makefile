@@ -1,7 +1,7 @@
 all: build 
 
 build:
-		kompile src/javalette.md -w all -v --gen-bison-parser --directory . -O2
+		kompile src/javalette.md -w all -v --directory . -O2 --gen-bison-parser
 		
 		bash makejlc
 

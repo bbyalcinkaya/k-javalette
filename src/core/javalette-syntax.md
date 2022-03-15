@@ -7,8 +7,10 @@ module JAVALETTE-SYNTAX
     imports BOOL-SYNTAX
     
     syntax Id ::= "main" [token]
+                | "length" [token]
     syntax Program ::= List{TopDef, ""}
-    syntax TopDef ::= Type Id "(" Params ")" Block
+    syntax TopDef ::= FunDef
+    syntax FunDef ::= Type Id "(" Params ")" Block
 
     syntax Params ::= List{Param, ","}
     syntax Param ::= Type Id 
@@ -31,11 +33,11 @@ module JAVALETTE-SYNTAX
     
     
     // Assignment
-    syntax Stmt ::= Id "=" Exp ";"  [strict(2)]
-                  | Id "++" ";" [macro] 
-                  | Id "--" ";" [macro] 
-    rule I:Id ++ ; => I = I + 1 ; 
-    rule I:Id -- ; => I = I - 1 ;
+    syntax Stmt ::= Exp "=" Exp ";" [strict(2)]
+                  | Exp "++" ";" [macro] 
+                  | Exp "--" ";" [macro] 
+    rule I ++ ; => I = I + 1 ; 
+    rule I -- ; => I = I - 1 ;
                   
     // Return
     syntax Stmt ::= "return" ";"
@@ -47,6 +49,8 @@ module JAVALETTE-SYNTAX
                   | "while" "(" Exp ")" Stmt            
     rule if (E) S => if (E) S else { .Stmts }
     
+    syntax Stmt ::= "for" "(" Type Id ":" Exp ")" Stmt
+
     // Expression statement
     syntax Stmt ::= Exp ";" [strict]
     
@@ -55,49 +59,54 @@ module JAVALETTE-SYNTAX
                   | "double"
                   | "boolean"
                   | "void"
+    syntax Type ::= Type "[" "]"
                   
     syntax Float [hook(FLOAT.Float)]
     syntax Float ::= r"[0-9]+\\.[0-9]+([eE][\\+-]?[0-9]+)?" [token]//, prec(2)]
-  
-    syntax Exp ::= Id 
+    
+    // array index and size
+    syntax Box ::= "[" Exp "]"
+    syntax Boxes ::= List{Box, ""}
+
+    syntax Exp ::= "(" Exp ")"                  [bracket]
                  | Bool
                  | Int                          
                  | Float
-                 > "(" Exp ")"                  [bracket]
+                 > "new" Type Boxes
                  > "readInt" "(" ")"
                  | "readDouble" "(" ")"
                  | "printInt" "(" Exp ")"       [strict]
                  | "printString" "(" String ")"
                  | "printDouble" "(" Exp ")"    [strict]
                  | Id "(" Args ")" 
+                 > Exp "[" Exp "]"              [seqstrict]
+                 | Exp "." Id                   [strict(1)]
+                 | Id 
                  > "-" Exp              [strict]     
                  | "!" Exp              [strict]
                  
-                 > Exp "*" Exp           [left, seqstrict]
+                 > //left:
+                   Exp "*" Exp           [left, seqstrict]
                  | Exp "/" Exp           [left, seqstrict]
                  | Exp "%" Exp           [left, seqstrict]
         
-                 > Exp "+" Exp           [left, seqstrict]
+                 > //left:
+                   Exp "+" Exp           [left, seqstrict]
                  | Exp "-" Exp           [left, seqstrict]
                 
-                 > Exp "==" Exp          [left, seqstrict]
+                 > //left:
+                   Exp "==" Exp          [left, seqstrict]
                  | Exp "!=" Exp          [left, seqstrict]
                  | Exp ">=" Exp          [left, seqstrict]
                  | Exp ">"  Exp          [left, seqstrict]
                  | Exp "<=" Exp          [left, seqstrict]
                  | Exp "<"  Exp          [left, seqstrict]
                 
-                 > Exp "&&" Exp          [left, strict(1)]
-                 > Exp "||" Exp          [left, strict(1)]
+                 > Exp "&&" Exp          [right, strict(1)]
+                 > Exp "||" Exp          [right, strict(1)]
 
     syntax Args ::= List{Exp, ","}       [strict]
 
-    syntax KResult ::= Value
-    
-    syntax Value ::= Int
-                   | Float 
-                   | Bool  
-                   | "nothing"
 
 endmodule 
 ```

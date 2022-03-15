@@ -1,7 +1,7 @@
 
 ```k
 
-module JAVALETTE-TYPES [private]
+module JAVALETTE-TYPES
     imports JAVALETTE-CONFIGURATION
     imports JAVALETTE-SYNTAX
     imports JAVALETTE-ENV
@@ -9,31 +9,41 @@ module JAVALETTE-TYPES [private]
     imports LIST
     imports K-EQUAL
 
-    rule <k> typecheck => checkFuns(keys_list(FUNS)) ... </k>
-         <funs> FUNS </funs> [structural]
+    configuration
+        <typecheck>
+            <tcode> .K </tcode>
+            <retType> void </retType>
+            <tenv> .List </tenv>
+        </typecheck>
 
+    syntax KItem ::= Typecheck(Program)
+                   | "#typechecking"
+    rule 
+        <progress> Typecheck(Prg) => #typechecking ... </progress>
+        <tcode> _ => Prg </tcode>
+        <retType> _ => void </retType>
+        <tenv> _ => .List </tenv>
+        <funs> ... (main |-> int main(.Params) _) ... </funs>
+    
+    rule 
+        <progress> #typechecking => . ... </progress>
+        <tcode> . </tcode>
+        <retType> _ => void </retType>
+        <tenv> _ => .List </tenv>
+    
+
+    rule <tcode> TD:TopDef Prg:Program => TD ~> Prg ... </tcode>  [structural]
+    rule <tcode> .Program => . ... </tcode>  [structural]
 ```
 
 ## Functions
 
-```k
-
-    
-    syntax KItem ::= checkFuns(List)
-    rule <k> checkFuns(.List) => . ... </k>                                             [structural]
-    rule <k> checkFuns(ListItem(I:Id) Rest) => checkFun(I) ~> checkFuns(Rest) ... </k>  [structural]
-
-```
 Initialize the environment (`tenv`) with parameters and check the function body.
 ```k
-    syntax KItem ::= checkFun (Id)
     rule 
-        <k> checkFun(F:Id) => checkBlock(Body) ... </k>
-        <funs> ... F |->  (T _ ( Ps ) Body) ... </funs>
-        <typecheck>
-            <tenv> _ => envMake(Ps) </tenv>
-            <retType> _ => T </retType>
-        </typecheck>
+        <tcode> T _ ( Ps ) Body => checkBlock(Body) ... </tcode>
+        <tenv> _ => envMake(Ps) </tenv>
+        <retType> _ => T </retType>
         requires noVoidParams(Ps)
     
     syntax Bool ::= noVoidParams( Params ) [function,functional]
@@ -46,19 +56,19 @@ Initialize the environment (`tenv`) with parameters and check the function body.
 ```k
     syntax KItem ::= checkStmt(Stmt)
 
-    rule <k> checkStmt( ; ) => . ... </k>
+    rule <tcode> checkStmt( ; ) => . ... </tcode>
 ```
 ### Block
 
-A block (`{...}`) introduce a new scope to the environment.
+A block (`{...}`) introduces a new scope to the environment.
 ```k             
-    rule <k> checkStmt( B:Block ) => checkBlock(B) ... </k>
+    rule <tcode> checkStmt( B:Block ) => checkBlock(B) ... </tcode>
     syntax KItem ::= checkBlock( Block ) 
-    rule <k> checkBlock( { Ss:Stmts } ) => pushTBlock ~> checkStmts(Ss) ~> popTBlock ... </k>
+    rule <tcode> checkBlock( { Ss:Stmts } ) => pushTBlock ~> checkStmts(Ss) ~> popTBlock ... </tcode>
     
     syntax KItem ::= checkStmts( Stmts )
-    rule <k> checkStmts( .Stmts ) => . ... </k>
-    rule <k> checkStmts( S:Stmt Ss:Stmts ) => checkStmt(S) ~> checkStmts(Ss) ... </k>
+    rule <tcode> checkStmts( .Stmts ) => . ... </tcode>
+    rule <tcode> checkStmts( S:Stmt Ss:Stmts ) => checkStmt(S) ~> checkStmts(Ss) ... </tcode>
 ```
 ### Variable declaration
 
@@ -70,30 +80,36 @@ Variables can be declared without initial values. If an initial value is given, 
 
 ```k
     rule 
-        <k> checkStmt( T:Type V:Id ; ) => . ... </k>
+        <tcode> checkStmt( T:Type V:Id ; ) => . ... </tcode>
         <tenv> ENV => envInsert(V, T, ENV) </tenv>
         requires notBool(envTopContains(ENV, V))
                 andBool ( T =/=K void )
         
     rule 
-        <k> checkStmt( T:Type V:Id = E:Exp ; ) => . ... </k>
+        <tcode> checkStmt( T:Type V:Id = E:Exp ; ) => . ... </tcode>
         <tenv> ENV => envInsert(V, T, ENV) </tenv>
         requires notBool(envTopContains(ENV, V))
                  andBool checkExp(T, E)
-    rule 
+    rule <tcode>
         checkStmt(T:Type V:DeclItem , V2 , Vs:DeclItems ; ) 
                 =>  
-        checkStmt(T V;) ~> checkStmt( T V2 , Vs ; )         [structural]
+        checkStmt(T V;) ~> checkStmt( T V2 , Vs ; ) ... 
+    </tcode>
 ```
 
 ### Assignment
 
 ```k
     rule 
-        <k> checkStmt( V:Id = E:Exp ; ) => . ... </k>
-        <tenv> ENV </tenv>
-        requires envContains(ENV, V) andBool
-                 checkExp( typeLookup(ENV, V) , E)
+        <tcode> checkStmt( V = E ; ) => . ... </tcode>
+        requires checkExp( inferExp(V) , E) 
+                andBool isLValue( V )
+    
+    syntax Bool ::= isLValue(Exp) [function,functional]
+    rule isLValue(_:Id) => true         // variable
+    rule isLValue(_) => false [owise]
+
+rule isLValue(_:Exp [_]) => true
 ```
 
 ### Return
@@ -102,11 +118,11 @@ The expression's type must match the return type. Empty return is only allowed i
 
 ```k
     rule 
-        <k> checkStmt( return ; ) => . ... </k>
+        <tcode> checkStmt( return ; ) => . ... </tcode>
         <retType> void </retType>
 
     rule 
-        <k> checkStmt( return E:Exp ; ) => . ... </k>
+        <tcode> checkStmt( return E:Exp ; ) => . ... </tcode>
         <retType> T </retType>
         requires checkExp(T, E)
 ```
@@ -117,18 +133,18 @@ Conditions must be `boolean` expressions.
 
 ```k
     rule 
-        <k> checkStmt( if( E:Exp ) ST:Stmt else SF:Stmt  ) 
+        <tcode> checkStmt( if( E:Exp ) ST:Stmt else SF:Stmt  ) 
                 => 
             pushTBlock ~> checkStmt(ST) ~> popTBlock ~>
             pushTBlock ~> checkStmt(SF) ~> popTBlock ... 
-        </k>
+        </tcode>
         requires checkExp(boolean, E)
         
     rule 
-        <k> checkStmt( while( E:Exp ) ST:Stmt ) 
+        <tcode> checkStmt( while( E:Exp ) ST:Stmt ) 
                 => 
             pushTBlock ~> checkStmt(ST) ~> popTBlock ... 
-        </k>
+        </tcode>
         requires checkExp(boolean, E)
 ```
 
@@ -137,19 +153,20 @@ Conditions must be `boolean` expressions.
 The expression must be a `void` expression.
 
 ```k
-    rule <k> checkStmt(E:Exp ;) => . ... </k> requires checkExp(void, E)
+    rule <tcode> checkStmt(E:Exp ;) => . ... </tcode> requires checkExp(void, E)
 ```
 ## Expressions
 
 Inferred type must match the expected type.
 ```k
-    syntax Bool ::= checkExp(Type, Exp) [function, functional]
-    rule checkExp( T:Type, E:Exp ) => T ==K inferExp(E)
+    syntax Bool ::= checkExp(InferRes, Exp) [function, functional]
+    rule checkExp( T:Type, E ) => T ==K inferExp(E)
+    rule checkExp( #typeError, _ ) => false
     
-    syntax InferRes ::= Type | "TypeError"
+    syntax InferRes ::= Type | "#typeError"
     syntax InferRes ::= inferExp(Exp) [function, functional]
     
-    rule inferExp(_) => TypeError [owise]
+    rule inferExp(_) => #typeError [owise]
 ```
 
 ### Literals
@@ -206,7 +223,7 @@ Operands must be of the same numeric type.
     
     syntax InferRes ::= inferArith(InferRes, Exp) [function, functional]
     rule inferArith(T:Type, E2:Exp) => T requires isNumeric(T) andBool checkExp(T, E2)
-    rule inferArith(TypeError, _) => TypeError
+    rule inferArith(#typeError, _) => #typeError
 ```
 
 ```k
@@ -223,7 +240,7 @@ Operands must be of the same numeric type.
     syntax InferRes ::= inferEq(InferRes, Exp) [function, functional]
     rule inferEq(T:Type, Other:Exp) => boolean requires isEquality(T)
                                                 andBool checkExp(T, Other)
-    rule inferEq(TypeError, _) => TypeError
+    rule inferEq(#typeError, _) => #typeError
 
     rule inferExp( E1:Exp >= E2:Exp ) => inferOrd(inferExp(E1), E2)
     rule inferExp( E1:Exp >  E2:Exp ) => inferOrd(inferExp(E1), E2)
@@ -233,7 +250,7 @@ Operands must be of the same numeric type.
     syntax InferRes ::= inferOrd(InferRes, Exp) [function, functional]
     rule inferOrd(T:Type, Other:Exp) => boolean requires isNumeric(T)
                                                             andBool checkExp(T, Other)
-    rule inferOrd(TypeError, _) => TypeError
+    rule inferOrd(#typeError, _) => #typeError
 
 ```
 
@@ -250,7 +267,7 @@ Operands must be of the same numeric type.
 ```k 
     syntax InferRes ::= mustBeNumeric(InferRes) [function, functional]
     rule mustBeNumeric(T:Type) => T requires isNumeric(T)
-    rule mustBeNumeric(TypeError) => TypeError
+    rule mustBeNumeric(#typeError) => #typeError
 
     syntax Bool ::= isNumeric(InferRes) [function, functional]
     rule isNumeric(int)    => true
@@ -267,11 +284,11 @@ Operands must be of the same numeric type.
     syntax KItem ::= "pushTBlock"
     syntax KItem ::= "popTBlock"
     
-    rule <k> pushTBlock => . ... </k>
+    rule <tcode> pushTBlock => . ... </tcode>
          <tenv> ENV => ListItem(.Map) ENV </tenv>
-    rule <k> popTBlock => . ... </k>
+    rule <tcode> popTBlock => . ... </tcode>
          <tenv> ListItem(_) ENV => ENV </tenv>
-    rule <k> popTBlock => . ... </k>
+    rule <tcode> popTBlock => . ... </tcode>
          <tenv> .List </tenv>
 
 endmodule

@@ -13,23 +13,53 @@ module JAVALETTE-EXECUTION
     imports JAVALETTE-ENV
     imports JAVALETTE-IO
 
-    
+    configuration
+        <exec>
+            // <code> .K </code>
+            <env> .List </env>
+            <stack> .List </stack>
+            <store> .Map </store>
+            <next-loc> 0 </next-loc>
+            <flag-run > $RUN:Int </flag-run>
+        </exec>
+        //<output stream="stdout"> .List </output>
+        
     syntax Values ::= List{Value, ","}
     syntax Exp ::= KResult
 
-    syntax KItem ::= "set_code"
+
+    syntax KItem ::= Execute( )
+                   | "#executing"
+                   | "#executedone" "(" Value ")"
 
     rule 
-        <k> execute_main ~> _ => . </k>
-        <flag-run> 0 </flag-run>
-        <status-code> _ => 0 </status-code>
-    rule 
-        <k> execute_main => main(.Args) ~> set_code ... </k>
+        <progress>  Execute( ) => #executing ... </progress>
+        <k>     . => main(.Args) ... </k>
+        <env>   _ => .List </env>
+        <stack> _ => .List </stack>
+        <store> _ => .Map </store>
         <flag-run> 1 </flag-run>
+    
+    rule 
+        <progress>  Execute( ) => #executedone(0) ... </progress>
+        <flag-run> 0 </flag-run>
 
     rule 
-        <k> I:Int ~> set_code => . ... </k>
-        <status-code> _ => I </status-code>
+        <progress> #executing => #executedone(V) ... </progress>
+        <k> V:Value ~> . => . </k>
+        <env>   _ => .List </env>
+        <stack> _ => .List </stack>
+        <store> _ => .Map </store>
+        <funs>  _ => .Map </funs>
+
+
+    
+    syntax KResult ::= Value
+                     | Values
+    syntax Value ::= Int
+                   | Float 
+                   | Bool  
+                   | "nothing"
 ```
 
 ## Expression evaluation
@@ -139,14 +169,10 @@ Declare parameters as local variables and assign arguments as initial values.
 
 ```k
     
-    rule <k> printInt(I:Int) => writeln(I) ... </k>
-    rule <k> printDouble(D:Float) => writeln(formatDouble(D)) ... </k>
-    rule <k> printString(S:String) => writeln(S) ... </k>
+    rule <k> printInt(I:Int) => writeln(Int2String(I)) ~> nothing ... </k>
+    rule <k> printDouble(D:Float) => writeln(formatDouble(D)) ~> nothing ... </k>
+    rule <k> printString(S:String) => writeln(S) ~> nothing ... </k>
     
-    syntax KItem ::= writeln(KItem)
-    rule 
-        <k> writeln(S) => nothing ... </k>
-        <output>... .List => ListItem(S) ListItem("\n") </output>
     
     rule <k> readInt() => getStdinInt() ... </k>
     rule <k> readDouble() => getStdinFloat() ... </k>
@@ -184,25 +210,20 @@ Declare parameters as local variables and assign arguments as initial values.
 
 ### Variable Declaration
 
+Reserve a location in `store` for the variable, and put the initial value on top of the `k` cell for evaluation.
 ```k
-
-    syntax KItem ::= varInit(Id)
-    rule <k> _:Type V:Id = E:Exp ; => E ~> varInit(V) ... </k>
     rule 
-        <k> Val:Value ~> varInit(Var) => . ... </k>
-        <env> ListItem(M) Rest => ListItem(M[Var <- !I:Int]) Rest </env>
-        <store> S => S[ !I <- Val ] </store>
-
-
-
+        <k> _:Type Var:Id = E:Exp ; => E ~> storeAt(Var) ... </k>
+        
+    syntax KItem ::= storeAt(Id)
+    rule 
+        <k> Val:Value ~> storeAt(Var) => . ... </k>
+        <store> S => S[ I <- Val ] </store>
+        <next-loc> I => I+Int 1 </next-loc>
+        <env> ListItem(M) Rest => ListItem(M[Var <- I]) Rest </env>
+    
     rule <k> T:Type V:Id ; => T V = defaultValue(T) ; ... </k> [structural]
         
-    syntax Value ::= defaultValue(Type) [function]
-    rule defaultValue(int) => 0
-    rule defaultValue(double) => 0.0
-    rule defaultValue(boolean) => false
-    
-
     rule 
         <k> 
             T:Type V:DeclItem , V2 , Vs:DeclItems ; 
@@ -210,16 +231,27 @@ Declare parameters as local variables and assign arguments as initial values.
             T V; ~> T V2 , Vs ; ... 
         </k>         [structural]
     
+    syntax Value ::= defaultValue(Type) [function]
+    rule defaultValue(int) => 0
+    rule defaultValue(double) => 0.0
+    rule defaultValue(boolean) => false
 ```
 
 ### Assignment
 
+
 ```k
-    rule
-        <k> X = V; => . ... </k>
-        <env> ENV </env>
-        <store> S => S[ envLookup(ENV, X) <- V ] </store>
+    rule <k> X = Val; => locate(X) ~> storeValue(Val) ... </k>
         
+    syntax KItem ::= storeValue(Value)
+    rule 
+        <k> I:Int ~> storeValue(Val) => . ... </k>
+        <store> S => S[ I <- Val ] </store>
+
+    syntax KItem ::= locate(Exp)
+    rule 
+        <k> locate(X:Id) => envLookup(ENV, X) ...</k>
+        <env> ENV </env>
 ```
 
 ### Control flow

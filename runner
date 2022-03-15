@@ -10,14 +10,16 @@ if [ "$#" -ne 2  ]; then
     source_file=$(mktemp)
     tee > ${source_file}
     delete_source=1
+    krun ${source_file} -cRUN=0 --output-file ${temp_file} --directory ${dir}
+
 else 
     #echo "from file"
     #echo $1
     source_file=$2
+    krun ${source_file} -cRUN=1 --output-file ${temp_file} --directory ${dir}
 fi
 
 
-krun ${source_file} -cRUN=1 --output-file ${temp_file} --directory ${dir}
 
 exit_code=$?
 if [ $exit_code != 0 ]
