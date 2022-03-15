@@ -1,9 +1,25 @@
 
 ```k
-requires "../core/javalette-syntax.md"
+requires "../core/javalette-syntax-core.md"
+
+module JAVALETTE-ARRAYS-SYNTAX
+    imports JAVALETTE-SYNTAX-CORE
+
+    syntax Type ::= Type "[" "]"
+
+    syntax Exp ::= "new" Type Boxes             [literal]
+                 | Exp "[" Exp "]"              [seqstrict, funcall]
+                 | Exp "." Id                   [strict(1), funcall]
+    
+    // array size
+    syntax Box ::= "[" Exp "]"
+    syntax Boxes ::= List{Box, ""}
+
+
+endmodule
 
 module JAVALETTE-ARRAYS
-    imports JAVALETTE-SYNTAX
+    imports JAVALETTE-SYNTAX-CORE
     imports JAVALETTE-TYPES
     imports JAVALETTE-EXECUTION
 

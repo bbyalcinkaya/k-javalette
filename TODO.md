@@ -2,15 +2,15 @@
 
 ## Extensions
 
-try this for syntax:
+cannot parse order_fun.jl
 
-   core-syntax
-      |    \
-      |     \
-      |     array-syntax
-      |     /
-    javalette-syntax
+```
+return x + y + z;
+                ^^^ unexpected semicolon :/ 
+```
 
+
+move "length" token to arrays.md !!!
 
 ## Issue
 

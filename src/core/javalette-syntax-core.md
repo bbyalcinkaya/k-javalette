@@ -1,6 +1,6 @@
 
 ```k
-module JAVALETTE-SYNTAX
+module JAVALETTE-SYNTAX-CORE
     imports ID-SYNTAX
     imports UNSIGNED-INT-SYNTAX
     imports STRING-SYNTAX
@@ -59,54 +59,47 @@ module JAVALETTE-SYNTAX
                   | "double"
                   | "boolean"
                   | "void"
-    syntax Type ::= Type "[" "]"
                   
     syntax Float [hook(FLOAT.Float)]
     syntax Float ::= r"[0-9]+\\.[0-9]+([eE][\\+-]?[0-9]+)?" [token]//, prec(2)]
     
-    // array index and size
-    syntax Box ::= "[" Exp "]"
-    syntax Boxes ::= List{Box, ""}
 
     syntax Exp ::= "(" Exp ")"                  [bracket]
-                 | Bool
-                 | Int                          
-                 | Float
-                 > "new" Type Boxes
-                 > "readInt" "(" ")"
-                 | "readDouble" "(" ")"
-                 | "printInt" "(" Exp ")"       [strict]
-                 | "printString" "(" String ")"
-                 | "printDouble" "(" Exp ")"    [strict]
-                 | Id "(" Args ")" 
-                 > Exp "[" Exp "]"              [seqstrict]
-                 | Exp "." Id                   [strict(1)]
+                 | Bool                         [literal]
+                 | Int                          [literal]
+                 | Float                        [literal]
                  | Id 
-                 > "-" Exp              [strict]     
-                 | "!" Exp              [strict]
                  
-                 > //left:
-                   Exp "*" Exp           [left, seqstrict]
-                 | Exp "/" Exp           [left, seqstrict]
-                 | Exp "%" Exp           [left, seqstrict]
+                 | "readInt" "(" ")"            [funcall]
+                 | "readDouble" "(" ")"         [funcall]
+                 | "printInt" "(" Exp ")"       [strict, funcall]
+                 | "printString" "(" String ")" [funcall]
+                 | "printDouble" "(" Exp ")"    [strict, funcall]
+                 | Id "(" Args ")"              [funcall]
+                 
+                 | "-" Exp              [strict, unary]     
+                 | "!" Exp              [strict, unary]
+                 
+                 | Exp "*" Exp           [left, seqstrict, binaryMult]
+                 | Exp "/" Exp           [left, seqstrict, binaryMult]
+                 | Exp "%" Exp           [left, seqstrict, binaryMult]
         
-                 > //left:
-                   Exp "+" Exp           [left, seqstrict]
-                 | Exp "-" Exp           [left, seqstrict]
+                 | Exp "+" Exp           [left, seqstrict, binaryAdd]
+                 | Exp "-" Exp           [left, seqstrict, binaryAdd]
                 
-                 > //left:
-                   Exp "==" Exp          [left, seqstrict]
-                 | Exp "!=" Exp          [left, seqstrict]
-                 | Exp ">=" Exp          [left, seqstrict]
-                 | Exp ">"  Exp          [left, seqstrict]
-                 | Exp "<=" Exp          [left, seqstrict]
-                 | Exp "<"  Exp          [left, seqstrict]
+                 | Exp "==" Exp          [left, seqstrict, binaryComp]
+                 | Exp "!=" Exp          [left, seqstrict, binaryComp]
+                 | Exp ">=" Exp          [left, seqstrict, binaryComp]
+                 | Exp ">"  Exp          [left, seqstrict, binaryComp]
+                 | Exp "<=" Exp          [left, seqstrict, binaryComp]
+                 | Exp "<"  Exp          [left, seqstrict, binaryComp]
                 
                  > Exp "&&" Exp          [right, strict(1)]
                  > Exp "||" Exp          [right, strict(1)]
 
     syntax Args ::= List{Exp, ","}       [strict]
 
+    syntax priorities literal > funcall > unary > binaryMult > binaryAdd > binaryComp
 
 endmodule 
 ```

@@ -2,7 +2,7 @@
 
 
 ```k
-requires "core/javalette-syntax.md"
+requires "javalette-syntax.md"
 requires "core/javalette-env.md"
 requires "core/javalette-configuration.md"
 requires "core/javalette-execution.md"
