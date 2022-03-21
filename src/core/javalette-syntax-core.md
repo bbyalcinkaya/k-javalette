@@ -7,7 +7,7 @@ module JAVALETTE-SYNTAX-CORE
     imports BOOL-SYNTAX
     
     syntax Id ::= "main" [token]
-                | "length" [token]
+    
     syntax Program ::= List{TopDef, ""}
     syntax TopDef ::= FunDef
     syntax FunDef ::= Type Id "(" Params ")" Block
@@ -61,7 +61,7 @@ module JAVALETTE-SYNTAX-CORE
                   | "void"
                   
     syntax Float [hook(FLOAT.Float)]
-    syntax Float ::= r"[0-9]+\\.[0-9]+([eE][\\+-]?[0-9]+)?" [token]//, prec(2)]
+    syntax Float ::= r"[0-9]+\\.[0-9]+([eE][\\+-]?[0-9]+)?" [token] //, prec(2)]
     
 
     syntax Exp ::= "(" Exp ")"                  [bracket]

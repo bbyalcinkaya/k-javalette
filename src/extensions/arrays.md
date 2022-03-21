@@ -7,6 +7,8 @@ module JAVALETTE-ARRAYS-SYNTAX
 
     syntax Type ::= Type "[" "]"
 
+    syntax Id ::= "length" [token]
+    
     syntax Exp ::= "new" Type Boxes             [literal]
                  | Exp "[" Exp "]"              [seqstrict, funcall]
                  | Exp "." Id                   [strict(1), funcall]
