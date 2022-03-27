@@ -14,10 +14,9 @@ Functions can be mutually recursive and declaration order does not matter. (`<fu
 module JAVALETTE-TOPLEVEL
     imports JAVALETTE-CONFIGURATION
     imports JAVALETTE-SYNTAX
-    imports JAVALETTE-ENV
 
-
-
+    imports BOOL
+    
     syntax KItem ::= Toplevels(Program)
                    | "#processingTopdefs"
     

@@ -160,6 +160,8 @@ Check function types:
         <typedefs> ... TName |-> _ ... </typedefs>
 
     rule isEquality(_:Id) => true
+    rule isEquality(#ptr(_)) => true
+    
 ```
 
 ## Execution
@@ -236,9 +238,15 @@ Check function types:
 
 ```
 
+## L-Values
+Struct fields are assignable
 ```k
     rule isLValue(_:Exp -> _:Id ) => true
+```
 
+```k
+    rule isLValue((_)null) => false
+    rule isLValue(new _:Id) => false
 
 endmodule
 

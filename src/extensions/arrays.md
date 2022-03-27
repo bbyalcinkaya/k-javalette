@@ -55,7 +55,10 @@ module JAVALETTE-ARRAYS
 
     rule
         <tcode> checkStmt(for( T X : Arr) Body) 
-            => pushTBlock ~> checkStmt(T X ;) ~> checkStmt(Body) ~> popTBlock ... 
+            => twithBlock( 
+                checkStmt(T X ;) ~> 
+                twithBlock(checkStmt(Body))
+            ) ... 
         </tcode>
         requires checkExp(T[], Arr)
 ```
@@ -153,8 +156,14 @@ Evaluate `Boxes` to `Values`
 
 ```k
     rule isLValue(newArray(_,_)) => false
+    rule isLValue(_ . _:Id) => false      [owise]
 
     rule retcheckStmt(for(_ _ : _)_) => false
+```
 
+
+Arrays do not support equality (`==` or `!=`) operators.
+```k
+    rule isEquality(_:Type []) => false
 endmodule
 ```

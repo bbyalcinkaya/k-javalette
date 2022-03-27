@@ -3,7 +3,6 @@
 
 ```k
 requires "javalette-syntax.md"
-requires "core/javalette-env.md"
 requires "core/javalette-configuration.md"
 requires "core/javalette-execution.md"
 requires "core/javalette-types.md"

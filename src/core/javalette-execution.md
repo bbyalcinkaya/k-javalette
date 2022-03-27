@@ -11,13 +11,12 @@ module JAVALETTE-EXECUTION
     imports JAVALETTE-CONFIGURATION
     imports JAVALETTE-SYNTAX
     imports JAVALETTE-TYPES
-    imports JAVALETTE-ENV
     imports JAVALETTE-IO
 
     configuration
         <exec>
             // <code> .K </code>
-            <env> .List </env>
+            <env> .Map </env>
             <stack> .List </stack>
             <store> .Map </store>
             <next-loc> 0 </next-loc>
@@ -35,7 +34,7 @@ module JAVALETTE-EXECUTION
     rule 
         <progress>  Execute( ) => #executing ... </progress>
         <k>     . => main(.Args) ... </k>
-        <env>   _ => .List </env>
+        <env>   _ => .Map </env>
         <stack> _ => .List </stack>
         <store> _ => .Map </store>
         <flag-run> 1 </flag-run>
@@ -47,7 +46,7 @@ module JAVALETTE-EXECUTION
     rule 
         <progress> #executing => #executedone(V) ... </progress>
         <k> V:Value ~> . => . </k>
-        <env>   _ => .List </env>
+        <env>   _ => .Map </env>
         <stack> _ => .List </stack>
         <store> _ => .Map </store>
         <funs>  _ => .Map </funs>
@@ -130,15 +129,15 @@ In `a && b` and `a || b`, if `a` evaluates to `false`, `b` is not evaluated.
 ```k
     rule 
         <k> X:Id => V ...</k>
-        <env> ENV </env>
-        <store> ... (envLookup(ENV, X) |-> V) ...</store>
-
+        <env> ... X |-> L ... </env>
+        <store> ... L |-> V ...</store>
     
 ```
 
 ### Function call
 ```k
 
+    syntax KItem ::= StackItem(K, Map)
     syntax KItem ::= applyFun( Id )
     rule <k> FUN:Id ( As ) => evalArgList(As) ~> applyFun( FUN ) ... </k> 
     rule 
@@ -147,9 +146,8 @@ In `a && b` and `a || b`, if `a` evaluates to `false`, `b` is not evaluated.
             declareArgs(Ps, As) ~> 
             BODY ~> return ; 
         </k>
-        <env> ENV => ListItem(.Map) </env>
+        <env> ENV => .Map </env>
         <funs> ... FUN |-> (_TYPE FUN ( Ps ) BODY) ... </funs>
-        //<stack> STACK => STACK </stack>    
         <stack> .List => ListItem( StackItem(REST, ENV) ) ... </stack>    
     
     
@@ -182,12 +180,6 @@ Declare parameters as local variables and assign arguments as initial values.
     rule <k> readInt() => getStdinInt() ... </k>
     rule <k> readDouble() => getStdinFloat() ... </k>
     
-        
-                                         
-
-    
-      
-    
 ```
 
 ## Statements
@@ -197,20 +189,22 @@ Declare parameters as local variables and assign arguments as initial values.
 ```k
     rule <k> ; => . ... </k>
     
-    rule <k> { Ss } => pushEBlock ~> Ss ~> popEBlock ... </k>
+    rule <k> { Ss } => withBlock(Ss) ... </k>
 
     rule <k> S:Stmt Ss:Stmts => S ~> Ss ... </k> [structural]
     rule <k> .Stmts => . ... </k> [structural]
+```
+
+Rules for saving and restoring environments when entering and leaving blocks.
+```k
+    syntax KItem ::= envReminder(Map)
+                   | withBlock(K)
     
-    syntax KItem ::= "pushEBlock"
-    syntax KItem ::= "popEBlock"
-    
-    rule <k> pushEBlock => . ... </k>
-         <env> ENV => ListItem(.Map) ENV </env>
-    rule <k> popEBlock => . ... </k>
-         <env> ListItem(_) ENV => ENV </env>
-    rule <k> popEBlock => . ... </k>
-         <env> .List </env>
+    rule <k> envReminder(ENV) => . ... </k>
+         <env> _ => ENV </env>
+
+    rule <k> withBlock(S) => S ~> envReminder(ENV) ... </k>
+         <env> ENV </env>
 ```
 
 ### Variable Declaration
@@ -225,7 +219,7 @@ Reserve a location in `store` for the variable, and put the initial value on top
         <k> Val:Value ~> storeAt(Var) => . ... </k>
         <store> S => S[ I <- Val ] </store>
         <next-loc> I => I+Int 1 </next-loc>
-        <env> ListItem(M) Rest => ListItem(M[Var <- I]) Rest </env>
+        <env> ENV => ENV[Var <- I] </env>
     
     rule <k> (T:Type V:Id ;):Stmt => T V = defaultValue(T) ; ... </k> [structural]
         
@@ -255,19 +249,19 @@ Reserve a location in `store` for the variable, and put the initial value on top
 
     syntax KItem ::= locate(Exp)
     rule 
-        <k> locate(X:Id) => envLookup(ENV, X) ...</k>
-        <env> ENV </env>
+        <k> locate(X:Id) => L ...</k>
+        <env> ... X |-> L ... </env>
 ```
 
 ### Control flow
 
 ```k
-    rule <k> if(true:Value)  T else _ => pushEBlock ~> T ~> popEBlock ... </k>
-    rule <k> if(false) _ else F => pushEBlock ~> F ~> popEBlock  ... </k>
+    rule <k> if(true:Value)  T else _ => withBlock(T) ... </k>
+    rule <k> if(false) _ else F => withBlock(F) ... </k>
 
     syntax KItem ::= freezeWhile(Exp, Stmt)
     rule <k> while(E) S => E ~> freezeWhile(E,S) ... </k>
-    rule <k> true  ~> freezeWhile(E,S) => S ~> while(E) S ... </k>
+    rule <k> true  ~> freezeWhile(E,S) => withBlock(S) ~> while(E) S ... </k>
     rule <k> false ~> freezeWhile(_,_) => .               ... </k>
 
 

@@ -4,16 +4,19 @@
 module JAVALETTE-TYPES
     imports JAVALETTE-CONFIGURATION
     imports JAVALETTE-SYNTAX
-    imports JAVALETTE-ENV
 
     imports LIST
+    imports MAP
+    imports SET
+    imports BOOL
     imports K-EQUAL
 
     configuration
         <typecheck>
             <tcode> .K </tcode>
             <retType> void </retType>
-            <tenv> .List </tenv>
+            <tenv> .Map </tenv>
+            <tenv-block> .Set </tenv-block>
         </typecheck>
 
     syntax KItem ::= Typecheck(Program)
@@ -22,16 +25,17 @@ module JAVALETTE-TYPES
         <progress> Typecheck(Prg) => #typechecking ... </progress>
         <tcode> _ => Prg </tcode>
         <retType> _ => void </retType>
-        <tenv> _ => .List </tenv>
+        <tenv> _ => .Map </tenv>
+        <tenv-block> _ => .Set </tenv-block>
         <funs> ... (main |-> int main(.Params) _) ... </funs>
     
     rule 
         <progress> #typechecking => . ... </progress>
         <tcode> . </tcode>
         <retType> _ => void </retType>
-        <tenv> _ => .List </tenv>
-    
-
+        <tenv> _ => .Map </tenv>
+        <tenv-block> _ => .Set </tenv-block>
+        
     rule <tcode> TD:TopDef Prg:Program => TD ~> Prg ... </tcode>  [structural]
     rule <tcode> .Program => . ... </tcode>  [structural]
 ```
@@ -50,16 +54,28 @@ module JAVALETTE-TYPES
 Initialize the environment (`tenv`) with parameters and check the function body.
 ```k
     rule 
-        <tcode> T _ ( Ps ) Body => checkBlock(Body) ... </tcode>
-        <tenv> _ => envMake(Ps) </tenv>
+        <tcode> T _ ( Ps ) { Ss } => twithBlock(checkStmts(Ss)) ... </tcode>
+        <tenv> _ => paramMap(Ps) </tenv>
+        <tenv-block> _ => .Set </tenv-block>
         <retType> _ => T </retType>
-        requires validParamTypes(Ps)
+        requires validParams(Ps)
     
-    syntax Bool ::= validParamTypes( Params ) [function,functional]
-    rule validParamTypes(.Params) => true
-    rule validParamTypes(T _, Ps) => 
-        validDataType(T) andBool validParamTypes(Ps)
+    syntax Bool ::= validParams( Params ) [function,functional]
+                  | validParamsH( Params, Map ) [function,functional]
+    rule validParams(Ps) => validParamsH(Ps, .Map)
+    rule validParamsH(.Params, _) => true 
+    rule validParamsH((T V, Ps), M) => 
+        validDataType(T) andBool 
+        notBool(V in_keys(M)) andBool
+        validParamsH(Ps, M[V <- T])
     
+    syntax Map ::= paramMap(Params) [function, functional]
+                 | paramMapH(Params, Map) [function, functional]
+    rule paramMap(Ps) => paramMapH(Ps, .Map) 
+    rule paramMapH( .Params , Acc ) => Acc 
+    rule paramMapH( (T:Type V:Id , Ps:Params) , Acc:Map ) 
+            => paramMapH(Ps, Acc[V <- T]) 
+
 ```
 
 ## Statements
@@ -72,17 +88,33 @@ Initialize the environment (`tenv`) with parameters and check the function body.
 
 A block (`{...}`) introduces a new scope to the environment.
 ```k             
-    rule <tcode> checkStmt( B:Block ) => checkBlock(B) ... </tcode>
-    syntax KItem ::= checkBlock( Block ) 
-    rule <tcode> checkBlock( { Ss:Stmts } ) => pushTBlock ~> checkStmts(Ss) ~> popTBlock ... </tcode>
+    rule <tcode> checkStmt( { Ss } ) => twithBlock(checkStmts(Ss)) ... </tcode>
     
     syntax KItem ::= checkStmts( Stmts )
     rule <tcode> checkStmts( .Stmts ) => . ... </tcode>
     rule <tcode> checkStmts( S:Stmt Ss:Stmts ) => checkStmt(S) ~> checkStmts(Ss) ... </tcode>
 ```
+
+Rules for saving and restoring environments when entering and leaving blocks.
+```k
+    syntax KItem ::= tenvReminder(Map, Set)
+                   | twithBlock(K)
+    
+    rule <tcode> tenvReminder(ENV,BLK) => . ... </tcode>
+         <tenv> _ => ENV </tenv>
+         <tenv-block> _ => BLK </tenv-block>
+         
+    rule <tcode> twithBlock(S) => S ~> tenvReminder(ENV,BLK) ... </tcode>
+         <tenv> ENV </tenv>
+         <tenv-block> BLK => .Set </tenv-block>
+         
+
+```
+
+
 ### Variable declaration
 
-A variable can only be declared once in a block (`envTopContains`).
+A variable can only be declared once in a block.
 A variable declared in an outer scope may be redeclared in a block;
 the new declaration then shadows the previous declaration for the rest of the block.
 
@@ -91,15 +123,17 @@ Variables can be declared without initial values. If an initial value is given, 
 ```k
     rule 
         <tcode> checkStmt( T:Type V:Id ; ) => . ... </tcode>
-        <tenv> ENV => envInsert(V, T, ENV) </tenv>
-        requires notBool(envTopContains(ENV, V))
+        <tenv> ENV => ENV[V <- T] </tenv>
+        <tenv-block> BLK => SetItem(V) BLK </tenv-block>
+        requires notBool(V in BLK)
                 andBool validDataType(T)
-        
+```
+When an initial value is provided, type of the expression must match the variable's type.
+```k
     rule 
-        <tcode> checkStmt( T:Type V:Id = E:Exp ; ) => . ... </tcode>
-        <tenv> ENV => envInsert(V, T, ENV) </tenv>
-        requires notBool(envTopContains(ENV, V))
-                 andBool checkExp(T, E)
+        <tcode> checkStmt( T:Type V:Id = E:Exp ; ) => checkStmt( T:Type V:Id; ) ... </tcode>
+        requires checkExp(T, E)
+    
     rule <tcode>
         checkStmt(T:Type V:DeclItem , V2 , Vs:DeclItems ; ) 
                 =>  
@@ -162,21 +196,21 @@ The expression's type must match the return type. Empty return is only allowed i
 
 ### Control flow
 
-Conditions must be `boolean` expressions.
+Conditions must be `boolean` expressions. 
 
 ```k
     rule 
         <tcode> checkStmt( if( E:Exp ) ST:Stmt else SF:Stmt  ) 
                 => 
-            pushTBlock ~> checkStmt(ST) ~> popTBlock ~>
-            pushTBlock ~> checkStmt(SF) ~> popTBlock ... 
+            twithBlock(checkStmt(ST)) ~>
+            twithBlock(checkStmt(SF)) ... 
         </tcode>
         requires checkExp(boolean, E)
         
     rule 
         <tcode> checkStmt( while( E:Exp ) ST:Stmt ) 
                 => 
-            pushTBlock ~> checkStmt(ST) ~> popTBlock ... 
+            twithBlock(checkStmt(ST)) ... 
         </tcode>
         requires checkExp(boolean, E)
 ```
@@ -219,8 +253,8 @@ Inferred type must match the expected type.
 ### Variable
 Lookup the variable's name in the environment.
 ```k
-    rule [[inferExp(V:Id) => typeLookup(ENV,V)]]
-        <tenv> ENV </tenv> 
+    rule [[inferExp(V:Id) => T ]]
+        <tenv> ... V |-> T ... </tenv> 
 ```
 
 ### Builtin I/O
@@ -318,17 +352,7 @@ Operands must be of the same numeric type.
     rule isEquality(double)  => true
     rule isEquality(boolean) => true
     rule isEquality(void)    => false
+    rule isEquality(#typeError) => false
     
-
-    syntax KItem ::= "pushTBlock"
-    syntax KItem ::= "popTBlock"
-    
-    rule <tcode> pushTBlock => . ... </tcode>
-         <tenv> ENV => ListItem(.Map) ENV </tenv>
-    rule <tcode> popTBlock => . ... </tcode>
-         <tenv> ListItem(_) ENV => ENV </tenv>
-    rule <tcode> popTBlock => . ... </tcode>
-         <tenv> .List </tenv>
-
 endmodule
 ```
