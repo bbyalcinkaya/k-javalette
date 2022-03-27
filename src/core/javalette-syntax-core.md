@@ -49,8 +49,7 @@ module JAVALETTE-SYNTAX-CORE
                   | "while" "(" Exp ")" Stmt            
     rule if (E) S => if (E) S else { .Stmts }
     
-    syntax Stmt ::= "for" "(" Type Id ":" Exp ")" Stmt
-
+    
     // Expression statement
     syntax Stmt ::= Exp ";" [strict]
     

@@ -1,9 +1,9 @@
 
 ```k
-requires "javalette-syntax-core.md"
+
 
 module JAVALETTE-ENV
-    imports JAVALETTE-SYNTAX-CORE
+    imports JAVALETTE-SYNTAX
     imports MAP
     imports LIST
     imports BOOL

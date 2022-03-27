@@ -1,9 +1,8 @@
 
 ```k
-requires "javalette-syntax-core.md"
 
 module JAVALETTE-CONFIGURATION 
-    imports JAVALETTE-SYNTAX-CORE
+    imports JAVALETTE-SYNTAX
     imports MAP
     imports LIST
     imports K-IO

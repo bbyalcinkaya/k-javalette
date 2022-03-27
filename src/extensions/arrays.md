@@ -15,15 +15,19 @@ module JAVALETTE-ARRAYS-SYNTAX
     
     // array size
     syntax Box ::= "[" Exp "]"
-    syntax Boxes ::= List{Box, ""}
+    syntax Boxes ::= NeList{Box, ""}
 
+    syntax Stmt ::= "for" "(" Type Id ":" Exp ")" Stmt
 
 endmodule
 
 module JAVALETTE-ARRAYS
-    imports JAVALETTE-SYNTAX-CORE
+    imports JAVALETTE-ARRAYS-SYNTAX
     imports JAVALETTE-TYPES
     imports JAVALETTE-EXECUTION
+    imports JAVALETTE-RETURNCHECK
+
+    rule validDataType(T []) => validDataType(T)
 
     rule inferExp(new T .Boxes) => T
     rule inferExp(new T [E] Bs) => arrayOf(inferExp(new T Bs))
@@ -33,19 +37,17 @@ module JAVALETTE-ARRAYS
     rule arrayOf(T:Type) => T[]
     rule arrayOf(#typeError) => #typeError
     
-    rule inferExp(E . F) => int requires hasField(inferExp(E), F)
+    rule inferExp(E . length) => int requires isArray(inferExp(E))
+    rule inferExp(_ . _:Id) => #typeError [owise]
     
-    syntax Bool ::= hasField(InferRes, Id) [function,functional]
-    rule hasField(#typeError, _) => false
-    rule hasField(_ [], length) => true 
-    rule hasField(_, _) => false [owise]
-    
-    syntax Bool ::= isArray(InferRes, Id) [function,functional]
-    rule isArray(_:Type [], length) => true
-    rule isArray(_, _) => false [owise]
+    syntax Bool ::= isArray(InferRes) [function,functional]
+    rule isArray(_:Type []) => true
+    rule isArray(_) => false [owise]
     
     rule isLValue(_:Exp [_]) => true    // array index
-    
+    rule isLValue(_ . length) => false    // array length
+    rule isLValue(new _ _:Boxes) => false
+
     rule inferExp( Arr [ Ix ] ) => arrayElement(inferExp(Arr)) requires checkExp(int, Ix)
     syntax InferRes ::= arrayElement(InferRes) [function, functional]
     rule arrayElement(T []) => T
@@ -150,5 +152,9 @@ Evaluate `Boxes` to `Values`
 
 
 ```k
+    rule isLValue(newArray(_,_)) => false
+
+    rule retcheckStmt(for(_ _ : _)_) => false
+
 endmodule
 ```

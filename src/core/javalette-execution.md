@@ -10,6 +10,7 @@ module JAVALETTE-EXECUTION
 
     imports JAVALETTE-CONFIGURATION
     imports JAVALETTE-SYNTAX
+    imports JAVALETTE-TYPES
     imports JAVALETTE-ENV
     imports JAVALETTE-IO
 
@@ -24,8 +25,7 @@ module JAVALETTE-EXECUTION
         </exec>
         //<output stream="stdout"> .List </output>
         
-    syntax Values ::= List{Value, ","}
-    syntax Exp ::= KResult
+
 
 
     syntax KItem ::= Execute( )
@@ -55,11 +55,16 @@ module JAVALETTE-EXECUTION
 
     
     syntax KResult ::= Value
-                     | Values
+                     | Values // TODO is this necessary
     syntax Value ::= Int
                    | Float 
                    | Bool  
                    | "nothing"
+                   
+    syntax Values ::= List{Value, ","}// TODO is Values necessary
+    syntax Exp ::= Value // TODO test this
+
+    rule isLValue(_:Value) => false
 ```
 
 ## Expression evaluation
@@ -222,7 +227,7 @@ Reserve a location in `store` for the variable, and put the initial value on top
         <next-loc> I => I+Int 1 </next-loc>
         <env> ListItem(M) Rest => ListItem(M[Var <- I]) Rest </env>
     
-    rule <k> T:Type V:Id ; => T V = defaultValue(T) ; ... </k> [structural]
+    rule <k> (T:Type V:Id ;):Stmt => T V = defaultValue(T) ; ... </k> [structural]
         
     rule 
         <k> 

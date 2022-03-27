@@ -35,6 +35,15 @@ module JAVALETTE-TYPES
     rule <tcode> TD:TopDef Prg:Program => TD ~> Prg ... </tcode>  [structural]
     rule <tcode> .Program => . ... </tcode>  [structural]
 ```
+## Valid data types
+```k
+    syntax Bool ::= validDataType(Type) [function,functional]
+    rule validDataType(int) => true
+    rule validDataType(double) => true
+    rule validDataType(boolean) => true
+    rule validDataType(void) => false
+```
+
 
 ## Functions
 
@@ -44,11 +53,12 @@ Initialize the environment (`tenv`) with parameters and check the function body.
         <tcode> T _ ( Ps ) Body => checkBlock(Body) ... </tcode>
         <tenv> _ => envMake(Ps) </tenv>
         <retType> _ => T </retType>
-        requires noVoidParams(Ps)
+        requires validParamTypes(Ps)
     
-    syntax Bool ::= noVoidParams( Params ) [function,functional]
-    rule noVoidParams(.Params) => true
-    rule noVoidParams(T _, Ps) => (T =/=K void) andBool noVoidParams(Ps)
+    syntax Bool ::= validParamTypes( Params ) [function,functional]
+    rule validParamTypes(.Params) => true
+    rule validParamTypes(T _, Ps) => 
+        validDataType(T) andBool validParamTypes(Ps)
     
 ```
 
@@ -83,7 +93,7 @@ Variables can be declared without initial values. If an initial value is given, 
         <tcode> checkStmt( T:Type V:Id ; ) => . ... </tcode>
         <tenv> ENV => envInsert(V, T, ENV) </tenv>
         requires notBool(envTopContains(ENV, V))
-                andBool ( T =/=K void )
+                andBool validDataType(T)
         
     rule 
         <tcode> checkStmt( T:Type V:Id = E:Exp ; ) => . ... </tcode>
@@ -105,11 +115,34 @@ Variables can be declared without initial values. If an initial value is given, 
         requires checkExp( inferExp(V) , E) 
                 andBool isLValue( V )
     
+    // Do not use [owise] rules
     syntax Bool ::= isLValue(Exp) [function,functional]
     rule isLValue(_:Id) => true         // variable
-    rule isLValue(_) => false [owise]
-
-rule isLValue(_:Exp [_]) => true
+    rule isLValue(_:Bool) => false
+    rule isLValue(_:Int) => false
+    rule isLValue(_:Float) => false
+    rule isLValue(readInt()) => false
+    rule isLValue(readDouble()) => false
+    rule isLValue(printInt(_)) => false
+    rule isLValue(printString(_)) => false
+    rule isLValue(printDouble(_)) => false
+    rule isLValue(_:Id (_)) => false
+    rule isLValue(- _) => false
+    rule isLValue(! _) => false
+    rule isLValue(_ * _) => false
+    rule isLValue(_ / _) => false
+    rule isLValue(_ % _) => false
+    rule isLValue(_ - _) => false
+    rule isLValue(_ + _) => false
+    rule isLValue(_ == _) => false
+    rule isLValue(_ != _) => false
+    rule isLValue(_ >= _) => false
+    rule isLValue(_ > _) => false
+    rule isLValue(_ <= _) => false
+    rule isLValue(_ < _) => false
+    rule isLValue(_ && _) => false
+    rule isLValue(_ || _) => false
+    
 ```
 
 ### Return
@@ -159,8 +192,14 @@ The expression must be a `void` expression.
 
 Inferred type must match the expected type.
 ```k
+    syntax Bool ::= equalType(InferRes, InferRes) [function, functional]
+    rule equalType(T1:Type, T2:Type)       => true requires T1 ==K T2
+    rule equalType(_:Type, #typeError)     => false
+    rule equalType(#typeError, _:Type)     => false
+    rule equalType(#typeError, #typeError) => false
+    
     syntax Bool ::= checkExp(InferRes, Exp) [function, functional]
-    rule checkExp( T:Type, E ) => T ==K inferExp(E)
+    rule checkExp( T:Type, E ) => equalType(T, inferExp(E))
     rule checkExp( #typeError, _ ) => false
     
     syntax InferRes ::= Type | "#typeError"
@@ -187,8 +226,8 @@ Lookup the variable's name in the environment.
 ### Builtin I/O
 
 ```k
-    rule inferExp(printInt(E:Exp))       => void requires int ==K inferExp(E)
-    rule inferExp(printDouble(E:Exp))    => void requires double ==K inferExp(E)
+    rule inferExp(printInt(E:Exp))       => void requires checkExp(int, E)
+    rule inferExp(printDouble(E:Exp))    => void requires checkExp(double, E)
     rule inferExp(printString(_:String)) => void
     rule inferExp(readInt())             => int
     rule inferExp(readDouble())          => double
@@ -278,7 +317,7 @@ Operands must be of the same numeric type.
     rule isEquality(int)     => true
     rule isEquality(double)  => true
     rule isEquality(boolean) => true
-    rule isEquality(_)       => false [owise]
+    rule isEquality(void)    => false
     
 
     syntax KItem ::= "pushTBlock"
