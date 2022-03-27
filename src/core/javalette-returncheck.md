@@ -35,8 +35,15 @@ module JAVALETTE-RETURNCHECK
     
     rule retcheckStmt({ Ss })        => retcheckStmts(Ss)
 
-    rule retcheckStmt(_) => false [owise]
+    rule retcheckStmt(;) => false
+    rule retcheckStmt(_:Type _:DeclItems ;) => false
+    rule retcheckStmt(_ = _ ;) => false
+    rule retcheckStmt(_ ;) => false
+    rule retcheckStmt(while(_)_) => false
     
+    // To suppress the non-exhaustive match warning
+    rule retcheckStmt(_ ++;) => false
+    rule retcheckStmt(_ --;) => false
     
 
 endmodule
