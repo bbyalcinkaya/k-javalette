@@ -54,10 +54,10 @@ module JAVALETTE-ARRAYS
     rule arrayElement(_) => #typeError [owise]
 
     rule
-        <tcode> checkStmt(for( T X : Arr) Body) 
+        <tcode> (for( T X : Arr) Body) 
             => twithBlock( 
-                checkStmt(T X ;) ~> 
-                twithBlock(checkStmt(Body))
+                (T X ;):Stmt ~> 
+                twithBlock( Body )
             ) ... 
         </tcode>
         requires checkExp(T[], Arr)

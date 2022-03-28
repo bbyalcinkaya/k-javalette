@@ -57,7 +57,7 @@ Initialize the environment (`tenv`) with parameters and check the function body.
 
 ```k
     rule 
-        <tcode> T _ ( Ps ) { Ss } => twithBlock(checkStmts(Ss)) ... </tcode>
+        <tcode> T _ ( Ps ) { Ss } => twithBlock( Ss ) ... </tcode>
         <tenv> _ => paramMap(Ps) </tenv>
         <tenv-block> _ => .Set </tenv-block>
         <retType> _ => T </retType>
@@ -84,9 +84,7 @@ Initialize the environment (`tenv`) with parameters and check the function body.
 ## Statements
 
 ```k
-    syntax KItem ::= checkStmt(Stmt)
-
-    rule <tcode> checkStmt( ; ) => . ... </tcode>
+    rule <tcode> ( ; ) => . ... </tcode>
 ```
 
 ### Block
@@ -94,11 +92,10 @@ Initialize the environment (`tenv`) with parameters and check the function body.
 A block (`{...}`) introduces a new scope to the environment.
 
 ```k             
-    rule <tcode> checkStmt( { Ss } ) => twithBlock(checkStmts(Ss)) ... </tcode>
+    rule <tcode> { Ss } => twithBlock( Ss ) ... </tcode>
     
-    syntax KItem ::= checkStmts( Stmts )
-    rule <tcode> checkStmts( .Stmts ) => . ... </tcode>
-    rule <tcode> checkStmts( S:Stmt Ss:Stmts ) => checkStmt(S) ~> checkStmts(Ss) ... </tcode>
+    rule <tcode> ( .Stmts ) => . ... </tcode>
+    rule <tcode> ( S:Stmt Ss:Stmts ) => S ~> Ss ... </tcode>
 ```
 
 Rules for saving and restoring environments when entering and leaving blocks.
@@ -129,7 +126,7 @@ Variables can be declared without initial values. If an initial value is given, 
 
 ```k
     rule 
-        <tcode> checkStmt( T:Type V:Id ; ) => . ... </tcode>
+        <tcode> ( T:Type V:Id ; ):Stmt => . ... </tcode>
         <tenv> ENV => ENV[V <- T] </tenv>
         <tenv-block> BLK => SetItem(V) BLK </tenv-block>
         requires notBool(V in BLK)
@@ -140,13 +137,13 @@ When an initial value is provided, type of the expression must match the variabl
 
 ```k
     rule 
-        <tcode> checkStmt( T:Type V:Id = E:Exp ; ) => checkStmt( T:Type V:Id; ) ... </tcode>
+        <tcode> ( T:Type V:Id = E:Exp ; ):Stmt => ( T:Type V:Id; ):Stmt ... </tcode>
         requires checkExp(T, E)
     
     rule <tcode>
-        checkStmt(T:Type V:DeclItem , V2 , Vs:DeclItems ; ) 
+        (T:Type V:DeclItem , V2 , Vs:DeclItems ; ) 
                 =>  
-        checkStmt(T V;) ~> checkStmt( T V2 , Vs ; ) ... 
+        (T V;) ~> ( T V2 , Vs ; ) ... 
     </tcode>
 ```
 
@@ -154,7 +151,7 @@ When an initial value is provided, type of the expression must match the variabl
 
 ```k
     rule 
-        <tcode> checkStmt( V = E ; ) => . ... </tcode>
+        <tcode> ( V = E ; ) => . ... </tcode>
         requires checkExp( inferExp(V) , E) 
                 andBool isLValue( V )
     
@@ -194,11 +191,11 @@ The expression's type must match the return type. Empty return is only allowed i
 
 ```k
     rule 
-        <tcode> checkStmt( return ; ) => . ... </tcode>
+        <tcode> ( return ; ) => . ... </tcode>
         <retType> void </retType>
 
     rule 
-        <tcode> checkStmt( return E:Exp ; ) => . ... </tcode>
+        <tcode> ( return E:Exp ; ) => . ... </tcode>
         <retType> T </retType>
         requires checkExp(T, E)
 ```
@@ -209,17 +206,17 @@ Conditions must be `boolean` expressions.
 
 ```k
     rule 
-        <tcode> checkStmt( if( E:Exp ) ST:Stmt else SF:Stmt  ) 
+        <tcode> ( if( E:Exp ) ST:Stmt else SF:Stmt  ) 
                 => 
-            twithBlock(checkStmt(ST)) ~>
-            twithBlock(checkStmt(SF)) ... 
+            twithBlock( ST ) ~>
+            twithBlock( SF ) ... 
         </tcode>
         requires checkExp(boolean, E)
         
     rule 
-        <tcode> checkStmt( while( E:Exp ) ST:Stmt ) 
+        <tcode> ( while( E:Exp ) ST:Stmt ) 
                 => 
-            twithBlock(checkStmt(ST)) ... 
+            twithBlock( (ST) ) ... 
         </tcode>
         requires checkExp(boolean, E)
 ```
@@ -229,7 +226,7 @@ Conditions must be `boolean` expressions.
 The expression must be a `void` expression.
 
 ```k
-    rule <tcode> checkStmt(E:Exp ;) => . ... </tcode> requires checkExp(void, E)
+    rule <tcode> (E:Exp ;) => . ... </tcode> requires checkExp(void, E)
 ```
 
 ## Expressions
