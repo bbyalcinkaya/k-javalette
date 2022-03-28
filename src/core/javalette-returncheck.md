@@ -9,9 +9,11 @@ module JAVALETTE-RETURNCHECK
     imports K-EQUAL
     
 
-    syntax KItem ::= Retcheck(Program)
+    syntax KItem ::= "#returncheck"
 
-    rule <progress> Retcheck(Prg) => . ... </progress> requires retcheckProgram(Prg)
+    rule <progress> #returncheck => . ... </progress>
+         <program> Prg </program>
+         requires retcheckProgram(Prg)
     
     syntax Bool ::= retcheckProgram(Program) [function, functional]
     rule retcheckProgram(.Program) => true

@@ -29,7 +29,7 @@ module JAVALETTE-SYNTAX-CORE
     syntax Stmt ::= Type DeclItems ";"
     syntax DeclItems ::= List{DeclItem, ","}
     syntax DeclItem ::= Id 
-                      | Id "=" Exp // [strict(2)]
+                      | Id "=" Exp
     
     
     // Assignment

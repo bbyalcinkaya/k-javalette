@@ -17,27 +17,21 @@ module JAVALETTE-TOPLEVEL
 
     imports BOOL
     
-    syntax KItem ::= Toplevels(Program)
-                   | "#processingTopdefs"
+    syntax KItem ::= "#processTopDefs"
+                   | processTopDef(TopDef)
+                   | "#processingTopDefs" "(" Program ")"
     
-    rule 
-        <progress> Toplevels(Prg) => #processingTopdefs ... </progress>
-        <k> . => processTopDefs(Prg) </k>
-    rule 
-        <progress> #processingTopdefs => . ... </progress>
-        <k> . </k>
-
-    syntax KItem ::= processTopDef(TopDef)
-                   | processTopDefs(Program)
+    rule <progress> #processTopDefs => #processingTopDefs(Prg) ... </progress>
+         <program> Prg </program>
+         
                    
-    rule <k> processTopDefs(.Program) => . ... </k>
-    rule <k> processTopDefs(TD Rest) => processTopDef(TD) ~> processTopDefs(Rest) ... </k> 
+    rule <progress> #processingTopDefs(.Program) => . ... </progress>                                           [structural]
+    rule <progress> #processingTopDefs(TD Rest) => processTopDef(TD) ~> #processingTopDefs(Rest) ... </progress>    [structural]
     
     rule 
-        <k> processTopDef(T I (Ps) Body) => . ... </k>
+        <progress> processTopDef(T I (Ps) Body) => . ... </progress>
         <funs> FUNS => FUNS[I <- (T I (Ps) Body)] </funs>
         requires notBool(I in_keys(FUNS))
-
 
 endmodule
 

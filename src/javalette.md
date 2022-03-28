@@ -23,7 +23,8 @@ module JAVALETTE
     imports JAVALETTE-ARRAYS
     imports JAVALETTE-STRUCTS
 
-    syntax KItem ::= "set_code"
+    syntax KItem ::= "#set_code"
+                   | "#done"
 
     configuration
         <jl>
@@ -35,17 +36,17 @@ module JAVALETTE
             
         </jl>
     rule 
-        <k> Prg:Program => . ... </k>
+        <program> Prg:Program </program>
         <progress> . =>
-            Toplevels(Prg) ~>
-            Typecheck(Prg) ~>
-            Retcheck(Prg) ~>
-            Execute( ) ~> 
-            set_code
+            #processTopDefs ~>
+            #typecheck ~>
+            #returncheck ~>
+            #execute ~> 
+            #set_code
         </progress>
         
     rule 
-        <progress> #executedone( I:Int ) ~> set_code => . ... </progress>
+        <progress> #executedone( I:Int ) ~> #set_code => #done ... </progress>
         <status-code> _ => I </status-code> 
 
     

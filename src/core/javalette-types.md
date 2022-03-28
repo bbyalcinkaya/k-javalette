@@ -19,10 +19,11 @@ module JAVALETTE-TYPES
             <tenv-block> .Set </tenv-block>
         </typecheck>
 
-    syntax KItem ::= Typecheck(Program)
+    syntax KItem ::= "#typecheck"
                    | "#typechecking"
     rule 
-        <progress> Typecheck(Prg) => #typechecking ... </progress>
+        <progress> #typecheck => #typechecking ... </progress>
+        <program> Prg </program>
         <tcode> _ => Prg </tcode>
         <retType> _ => void </retType>
         <tenv> _ => .Map </tenv>
@@ -40,6 +41,7 @@ module JAVALETTE-TYPES
     rule <tcode> .Program => . ... </tcode>  [structural]
 ```
 ## Valid data types
+
 ```k
     syntax Bool ::= validDataType(Type) [function,functional]
     rule validDataType(int) => true
@@ -52,6 +54,7 @@ module JAVALETTE-TYPES
 ## Functions
 
 Initialize the environment (`tenv`) with parameters and check the function body.
+
 ```k
     rule 
         <tcode> T _ ( Ps ) { Ss } => twithBlock(checkStmts(Ss)) ... </tcode>
@@ -79,14 +82,17 @@ Initialize the environment (`tenv`) with parameters and check the function body.
 ```
 
 ## Statements
+
 ```k
     syntax KItem ::= checkStmt(Stmt)
 
     rule <tcode> checkStmt( ; ) => . ... </tcode>
 ```
+
 ### Block
 
 A block (`{...}`) introduces a new scope to the environment.
+
 ```k             
     rule <tcode> checkStmt( { Ss } ) => twithBlock(checkStmts(Ss)) ... </tcode>
     
@@ -96,6 +102,7 @@ A block (`{...}`) introduces a new scope to the environment.
 ```
 
 Rules for saving and restoring environments when entering and leaving blocks.
+
 ```k
     syntax KItem ::= tenvReminder(Map, Set)
                    | twithBlock(K)
@@ -128,7 +135,9 @@ Variables can be declared without initial values. If an initial value is given, 
         requires notBool(V in BLK)
                 andBool validDataType(T)
 ```
+
 When an initial value is provided, type of the expression must match the variable's type.
+
 ```k
     rule 
         <tcode> checkStmt( T:Type V:Id = E:Exp ; ) => checkStmt( T:Type V:Id; ) ... </tcode>
@@ -222,9 +231,11 @@ The expression must be a `void` expression.
 ```k
     rule <tcode> checkStmt(E:Exp ;) => . ... </tcode> requires checkExp(void, E)
 ```
+
 ## Expressions
 
 Inferred type must match the expected type.
+
 ```k
     syntax Bool ::= equalType(InferRes, InferRes) [function, functional]
     rule equalType(T1:Type, T2:Type)       => true requires T1 ==K T2
@@ -243,6 +254,7 @@ Inferred type must match the expected type.
 ```
 
 ### Literals
+
 ```k
     rule inferExp(_:Int)           => int 
     rule inferExp(true)            => boolean 
@@ -252,6 +264,7 @@ Inferred type must match the expected type.
 
 ### Variable
 Lookup the variable's name in the environment.
+
 ```k
     rule [[inferExp(V:Id) => T ]]
         <tenv> ... V |-> T ... </tenv> 
@@ -284,10 +297,13 @@ Lookup the variable's name in the environment.
 ### Arithmetic operations
 
 Any numeric value can be negated using `-`.
+
 ```k     
     rule inferExp( - E:Exp) => mustBeNumeric(inferExp(E))
 ```
+
 Operands must be of the same numeric type.
+
 ```k    
     rule inferExp( E1:Exp + E2:Exp ) => inferArith(inferExp(E1), E2)
     rule inferExp( E1:Exp - E2:Exp ) => inferArith(inferExp(E1), E2)
@@ -328,6 +344,7 @@ Operands must be of the same numeric type.
 ```
 
 ### Logical operations
+
 ```k
     rule inferExp( E1:Exp && E2:Exp ) => boolean requires checkExp(boolean, E1)
                                                             andBool checkExp(boolean, E2)
@@ -337,6 +354,7 @@ Operands must be of the same numeric type.
 ```
 
 ### Helper functions
+
 ```k 
     syntax InferRes ::= mustBeNumeric(InferRes) [function, functional]
     rule mustBeNumeric(T:Type) => T requires isNumeric(T)

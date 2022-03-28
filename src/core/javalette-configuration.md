@@ -9,7 +9,7 @@ module JAVALETTE-CONFIGURATION
 
     configuration
         <common>
-            <k> $PGM:Program </k>
+            <program> $PGM:Program </program>
             <progress> .K </progress>
             <funs> .Map </funs>
         </common>

@@ -15,7 +15,7 @@ module JAVALETTE-EXECUTION
 
     configuration
         <exec>
-            // <code> .K </code>
+            <k> .K </k>
             <env> .Map </env>
             <stack> .List </stack>
             <store> .Map </store>
@@ -27,12 +27,12 @@ module JAVALETTE-EXECUTION
 
 
 
-    syntax KItem ::= Execute( )
+    syntax KItem ::= "#execute"
                    | "#executing"
                    | "#executedone" "(" Value ")"
 
     rule 
-        <progress>  Execute( ) => #executing ... </progress>
+        <progress>  #execute => #executing ... </progress>
         <k>     . => main(.Args) ... </k>
         <env>   _ => .Map </env>
         <stack> _ => .List </stack>
@@ -40,7 +40,7 @@ module JAVALETTE-EXECUTION
         <flag-run> 1 </flag-run>
     
     rule 
-        <progress>  Execute( ) => #executedone(0) ... </progress>
+        <progress>  #execute => #executedone(0) ... </progress>
         <flag-run> 0 </flag-run>
 
     rule 

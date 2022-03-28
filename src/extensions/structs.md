@@ -45,14 +45,14 @@ module JAVALETTE-STRUCTS
 ## Handling Toplevel declarations
 ```k
     rule
-        <k> processTopDef(typedef struct SName * TName ;) =>  
+        <progress> processTopDef(typedef struct SName * TName ;) =>  
             . ...
-        </k>
+        </progress>
         <typedefs> TDefs => TDefs (TName |-> SName) </typedefs>
         requires notBool(TName in_keys(TDefs))
 
     rule
-        <k> processTopDef(struct SName { Fields };) => . ... </k>
+        <progress> processTopDef(struct SName { Fields };) => . ... </progress>
         <structMaps> 
             Structs => Structs (SName |-> structMap(Fields))
         </structMaps>
