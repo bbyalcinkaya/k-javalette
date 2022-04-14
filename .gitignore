@@ -4,4 +4,8 @@ javalette-kompiled/
 .kparse*
 .kompile*
 
+jlc
+
 testsuite/
+
+*.tar.gz

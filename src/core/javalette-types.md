@@ -58,9 +58,9 @@ Initialize the environment (`tenv`) with parameters and check the function body.
 ```k
     rule 
         <tcode> T _ ( Ps ) { Ss } => twithBlock( Ss ) ... </tcode>
-        <tenv> _ => paramMap(Ps) </tenv>
-        <tenv-block> _ => .Set </tenv-block>
-        <retType> _ => T </retType>
+        <tenv> _       => paramMap(Ps) </tenv>
+        <tenv-block> _ => .Set         </tenv-block>
+        <retType> _    => T            </retType>
         requires validParams(Ps)
     
     syntax Bool ::= validParams( Params ) [function,functional]
@@ -111,7 +111,6 @@ Rules for saving and restoring environments when entering and leaving blocks.
     rule <tcode> twithBlock(S) => S ~> tenvReminder(ENV,BLK) ... </tcode>
          <tenv> ENV </tenv>
          <tenv-block> BLK => .Set </tenv-block>
-         
 
 ```
 

@@ -17,7 +17,7 @@ module JAVALETTE-ARRAYS-SYNTAX
     syntax Box ::= "[" Exp "]"
     syntax Boxes ::= NeList{Box, ""}
 
-    syntax Stmt ::= "for" "(" Type Id ":" Exp ")" Stmt
+    syntax Stmt ::= "for" "(" Type Id ":" Exp ")" Stmt [strict(3)]
 
 endmodule
 
@@ -124,6 +124,7 @@ Evaluate `Boxes` to `Values`
 ```
 
 ## For loops
+For-loops are strict on the `Range` expression, so it is evaluated only once and before the loop. Consequently, the address and size of the array stays constant in the loop. 
 ```k
 
     rule 
@@ -136,7 +137,7 @@ Evaluate `Boxes` to `Values`
         </k>
         
 
-    syntax Stmt ::= forUnroll(Id, Exp, Stmt, Int) [strict(2)]
+    syntax Stmt ::= forUnroll(Id, Value, Stmt, Int)
 
     rule 
         <k> 

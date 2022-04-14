@@ -54,15 +54,16 @@ module JAVALETTE-EXECUTION
 
     
     syntax KResult ::= Value
-                     | Values // TODO is this necessary
+
     syntax Value ::= Int
                    | Float 
                    | Bool  
                    | "nothing"
                    
-    syntax Values ::= List{Value, ","}// TODO is Values necessary
-    syntax Exp ::= Value // TODO test this
-
+    syntax Values ::= List{Value, ","}
+    
+    syntax Exp ::= Value
+    
     rule isLValue(_:Value) => false
 ```
 
@@ -112,7 +113,7 @@ In binary operations, evaluation order is from left to right.
     rule <k> I1:Bool != I2 => I1 =/=Bool I2 ... </k>
 ```
 ### Logic operators
-In `a && b` and `a || b`, if `a` evaluates to `false`, `b` is not evaluated. 
+In `a && b` and `a || b`, `b` is only evaluated when necessary. 
 ```k
     rule <k> false:Value && _ => false:Value ... </k>
     rule <k> true:Value  && E => E ... </k>
@@ -131,7 +132,6 @@ In `a && b` and `a || b`, if `a` evaluates to `false`, `b` is not evaluated.
         <k> X:Id => V ...</k>
         <env> ... X |-> L ... </env>
         <store> ... L |-> V ...</store>
-    
 ```
 
 ### Function call
@@ -151,7 +151,6 @@ In `a && b` and `a || b`, if `a` evaluates to `false`, `b` is not evaluated.
         <stack> .List => ListItem( StackItem(REST, ENV) ) ... </stack>    
     
     
-    //rule <k> .Args => .Values ... </k>
     syntax KItem ::= evalArgList(Args)
     syntax KItem ::= evalArgTail(Args) 
     syntax KItem ::= evalArgHead(Value)
