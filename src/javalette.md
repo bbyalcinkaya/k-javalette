@@ -10,7 +10,6 @@ requires "core/javalette-returncheck.md"
 requires "core/javalette-toplevel.md"
 requires "extensions/arrays.md"
 
-// TODO return checker. see TODO.md
 
 module JAVALETTE
     imports JAVALETTE-SYNTAX
@@ -36,7 +35,6 @@ module JAVALETTE
             
         </jl>
     rule 
-        <program> Prg:Program </program>
         <progress> . =>
             #processTopDefs ~>
             #typecheck ~>
