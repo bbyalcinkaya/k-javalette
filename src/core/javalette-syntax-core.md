@@ -79,12 +79,9 @@ module JAVALETTE-SYNTAX-CORE
                  | "-" Exp              [strict, unary]     
                  | "!" Exp              [strict, unary]
                  
-                 | Exp "*" Exp           [left, seqstrict, binaryMult]
-                 | Exp "/" Exp           [left, seqstrict, binaryMult]
-                 | Exp "%" Exp           [left, seqstrict, binaryMult]
+                 | Exp MulOp Exp         [left, seqstrict(1,3), binaryMult]
         
-                 | Exp "+" Exp           [left, seqstrict, binaryAdd]
-                 | Exp "-" Exp           [left, seqstrict, binaryAdd]
+                 | Exp AddOp Exp         [left, seqstrict(1,3), binaryAdd]
                 
                  | Exp "==" Exp          [left, seqstrict, binaryComp]
                  | Exp "!=" Exp          [left, seqstrict, binaryComp]
@@ -95,6 +92,9 @@ module JAVALETTE-SYNTAX-CORE
                 
                  > Exp "&&" Exp          [right, strict(1)]
                  > Exp "||" Exp          [right, strict(1)]
+
+    syntax AddOp ::= "+" | "-"
+    syntax MulOp ::= "*" | "/" | "%"
 
     syntax Args ::= List{Exp, ","}       [strict]
 

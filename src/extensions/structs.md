@@ -18,7 +18,7 @@ module JAVALETTE-STRUCTS-SYNTAX
     syntax Type ::= Id
 
     syntax Exp ::= Exp "->" Id   [strict(1), funcall]
-                 | "new" Type    [funcall]
+                 | "new" Id    [funcall]
                  | "(" Id ")" "null"        [literal]
                   
 endmodule
