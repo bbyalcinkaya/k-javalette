@@ -1,0 +1,12 @@
+
+randomize-kompiled/
+.krun*
+.kparse*
+.kompile*
+
+jlc
+
+testsuite/
+testsuite_/
+
+*.tar.gz

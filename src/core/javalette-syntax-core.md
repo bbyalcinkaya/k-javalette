@@ -6,8 +6,13 @@ module JAVALETTE-SYNTAX-CORE
     imports STRING-SYNTAX
     imports BOOL-SYNTAX
     
-    syntax Id ::= "main" [token]
-    
+    syntax Id ::= "main"        [token]
+                | "printInt"    [token]
+                | "printDouble" [token]
+                | "printString" [token]
+                | "readInt"     [token]
+                | "readDouble"  [token]
+                
     syntax Program ::= List{TopDef, ""}
     syntax TopDef ::= FunDef
     syntax FunDef ::= Type Id "(" Params ")" Block
@@ -27,17 +32,15 @@ module JAVALETTE-SYNTAX-CORE
 
     // Variable declaration
     syntax Stmt ::= Type DeclItems ";"
-    syntax DeclItems ::= List{DeclItem, ","}
+    syntax DeclItems ::= NeList{DeclItem, ","}
     syntax DeclItem ::= Id 
                       | Id "=" Exp
     
     
     // Assignment
     syntax Stmt ::= Exp "=" Exp ";" [strict(2)]
-                  | Exp "++" ";" [macro] 
-                  | Exp "--" ";" [macro] 
-    rule I ++ ; => I = I + 1 ; 
-    rule I -- ; => I = I - 1 ;
+                  | Exp "++" ";"
+                  | Exp "--" ";"
                   
     // Return
     syntax Stmt ::= "return" ";"
@@ -68,12 +71,8 @@ module JAVALETTE-SYNTAX-CORE
                  | Int                          [literal]
                  | Float                        [literal]
                  | Id 
-                 
-                 | "readInt" "(" ")"            [funcall]
-                 | "readDouble" "(" ")"         [funcall]
-                 | "printInt" "(" Exp ")"       [strict, funcall]
-                 | "printString" "(" String ")" [funcall]
-                 | "printDouble" "(" Exp ")"    [strict, funcall]
+                 | String                       [literal]
+
                  | Id "(" Args ")"              [funcall]
                  
                  | "-" Exp              [strict, unary]     
@@ -83,18 +82,14 @@ module JAVALETTE-SYNTAX-CORE
         
                  | Exp AddOp Exp         [left, seqstrict(1,3), binaryAdd]
                 
-                 | Exp "==" Exp          [left, seqstrict, binaryComp]
-                 | Exp "!=" Exp          [left, seqstrict, binaryComp]
-                 | Exp ">=" Exp          [left, seqstrict, binaryComp]
-                 | Exp ">"  Exp          [left, seqstrict, binaryComp]
-                 | Exp "<=" Exp          [left, seqstrict, binaryComp]
-                 | Exp "<"  Exp          [left, seqstrict, binaryComp]
+                 | Exp RelOp  Exp        [left, seqstrict(1,3), binaryComp]
                 
                  > Exp "&&" Exp          [right, strict(1)]
                  > Exp "||" Exp          [right, strict(1)]
 
     syntax AddOp ::= "+" | "-"
     syntax MulOp ::= "*" | "/" | "%"
+    syntax RelOp ::= "==" | "!=" | ">=" | ">" | "<=" | "<"
 
     syntax Args ::= List{Exp, ","}       [strict]
 

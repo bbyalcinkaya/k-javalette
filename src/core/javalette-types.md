@@ -49,7 +49,12 @@ module JAVALETTE-TYPES
     rule validDataType(boolean) => true
     rule validDataType(void) => false
 ```
+## Built-in functions
 
+```k
+    syntax Set ::= "builtinFuns" [function, functional]
+    rule builtinFuns => SetItem("readInt") SetItem("readDouble") SetItem("printInt") SetItem("printDouble") SetItem("printString")
+```
 
 ## Functions
 
@@ -57,11 +62,13 @@ Initialize the environment (`tenv`) with parameters and check the function body.
 
 ```k
     rule 
-        <tcode> T _ ( Ps ) { Ss } => twithBlock( Ss ) ... </tcode>
+        <tcode> T:Type FName:Id ( Ps:Params ) { Ss } => twithBlock( Ss ) ... </tcode>
         <tenv> _       => paramMap(Ps) </tenv>
         <tenv-block> _ => .Set         </tenv-block>
         <retType> _    => T            </retType>
-        requires validParams(Ps)
+        requires 
+            notBool(FName in builtinFuns  )
+            andBool validParams(Ps)
     
     syntax Bool ::= validParams( Params ) [function,functional]
                   | validParamsH( Params, Map ) [function,functional]
@@ -160,12 +167,8 @@ When an initial value is provided, type of the expression must match the variabl
     rule isLValue(_:Bool) => false
     rule isLValue(_:Int) => false
     rule isLValue(_:Float) => false
-    rule isLValue(readInt()) => false
-    rule isLValue(readDouble()) => false
-    rule isLValue(printInt(_)) => false
-    rule isLValue(printString(_)) => false
-    rule isLValue(printDouble(_)) => false
-    rule isLValue(_:Id (_)) => false
+    rule isLValue(_:String) => false
+    rule isLValue(_:Id (_:Args)) => false
     rule isLValue(- _) => false
     rule isLValue(! _) => false
     rule isLValue(_ * _) => false
@@ -181,8 +184,22 @@ When an initial value is provided, type of the expression must match the variabl
     rule isLValue(_ < _) => false
     rule isLValue(_ && _) => false
     rule isLValue(_ || _) => false
-    
 ```
+
+### Increment/Decrement
+
+Only for expressions of type `int`
+```k
+    rule 
+        <tcode> ( E ++ ; ) => . ... </tcode>
+        requires checkExp( int , E) 
+                andBool isLValue( E )
+    rule 
+        <tcode> ( E -- ; ) => . ... </tcode>
+        requires checkExp( int , E) 
+                andBool isLValue( E )
+```
+
 
 ### Return
 
@@ -256,6 +273,7 @@ Inferred type must match the expected type.
     rule inferExp(true)            => boolean 
     rule inferExp(false)           => boolean 
     rule inferExp(_:Float)         => double
+    rule inferExp(_:String)        => #typeError
 ```
 
 ### Variable
@@ -269,18 +287,18 @@ Lookup the variable's name in the environment.
 ### Builtin I/O
 
 ```k
-    rule inferExp(printInt(E:Exp))       => void requires checkExp(int, E)
-    rule inferExp(printDouble(E:Exp))    => void requires checkExp(double, E)
-    rule inferExp(printString(_:String)) => void
-    rule inferExp(readInt())             => int
-    rule inferExp(readDouble())          => double
+    rule inferExp(printInt(E:Exp , .Args))      => void requires checkExp(int, E)
+    rule inferExp(printDouble(E:Exp, .Args))    => void requires checkExp(double, E)
+    rule inferExp(printString(_:String, .Args)) => void
+    rule inferExp(readInt(.Args))               => int
+    rule inferExp(readDouble(.Args))            => double
 ```
 
 ### Function call
 
 ```k
     rule [[ inferExp(Fun:Id  ( As:Args ) )  => T ]]
-        <funs> ... Fun |-> (T:Type _ ( Ps:Params ) _ ) ... </funs> requires checkArgs(As, Ps)
+        <funs> ... Fun |-> (T:Type _:Id ( Ps:Params ) _ ) ... </funs> requires checkArgs(As, Ps)
     
     syntax Bool ::= checkArgs(Args, Params) [function, functional]
     rule checkArgs(.Args, .Params)       => true 

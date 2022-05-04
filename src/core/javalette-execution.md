@@ -58,6 +58,7 @@ module JAVALETTE-EXECUTION
     syntax Value ::= Int
                    | Float 
                    | Bool  
+                   | String
                    | "nothing"
                    
     syntax Values ::= List{Value, ","}
@@ -92,21 +93,21 @@ In binary operations, evaluation order is from left to right.
 ```
 ### Comparison operators
 ```k
-    rule <k> I1:Int >  I2 => I1 >Int  I2 ... </k>
-    rule <k> I1:Float >  I2 => I1 >Float I2 ... </k>
+    rule <k> (I1:Int) >  I2 => I1 >Int  I2 ... </k>
+    rule <k> (I1:Float) >  I2 => I1 >Float I2 ... </k>
     
-    rule <k> I1:Int >= I2 => I1 >=Int I2 ... </k>
-    rule <k> I1:Float >= I2 => I1 >=Float I2 ... </k>
+    rule <k> (I1:Int) >= I2 => I1 >=Int I2 ... </k>
+    rule <k> (I1:Float) >= I2 => I1 >=Float I2 ... </k>
     
-    rule <k> I1:Int <  I2 => I1 <Int  I2 ... </k>
-    rule <k> I1:Float <  I2 => I1 <Float I2 ... </k>
+    rule <k> (I1:Int) <  I2 => I1 <Int  I2 ... </k>
+    rule <k> (I1:Float) <  I2 => I1 <Float I2 ... </k>
     
-    rule <k> I1:Int <= I2 => I1 <=Int I2 ... </k>
-    rule <k> I1:Float <= I2 => I1 <=Float I2 ... </k>
+    rule <k> (I1:Int) <= I2 => I1 <=Int I2 ... </k>
+    rule <k> (I1:Float) <= I2 => I1 <=Float I2 ... </k>
     
-    rule <k> I1:Int == I2 => I1 ==Int I2 ... </k>
-    rule <k> I1:Float == I2 => I1 ==Float I2 ... </k>
-    rule <k> I1:Bool == I2 => I1 ==Bool I2 ... </k>
+    rule <k> (I1:Int) == I2 => I1 ==Int I2 ... </k>
+    rule <k> (I1:Float) == I2 => I1 ==Float I2 ... </k>
+    rule <k> (I1:Bool) == I2 => I1 ==Bool I2 ... </k>
     
     rule <k> I1:Int != I2 => I1 =/=Int I2 ... </k>
     rule <k> I1:Float != I2 => I1 =/=Float I2 ... </k>
@@ -171,13 +172,13 @@ Declare parameters as local variables and assign arguments as initial values.
 
 ```k
     
-    rule <k> printInt(I:Int) => writeln(Int2String(I)) ~> nothing ... </k>
-    rule <k> printDouble(D:Float) => writeln(formatDouble(D)) ~> nothing ... </k>
-    rule <k> printString(S:String) => writeln(S) ~> nothing ... </k>
+    rule <k> (I, .Values) ~> applyFun(printInt) => writeln(Int2String(I)) ~> nothing ... </k>
+    rule <k> (D, .Values) ~> applyFun(printDouble) => writeln(formatDouble(D)) ~> nothing ... </k>
+    rule <k> (S, .Values) ~> applyFun(printString) => writeln(S) ~> nothing ... </k>
     
     
-    rule <k> readInt() => getStdinInt() ... </k>
-    rule <k> readDouble() => getStdinFloat() ... </k>
+    rule <k> .Values ~> applyFun(readInt) => getStdinInt() ... </k>
+    rule <k> .Values ~> applyFun(readDouble) => getStdinFloat() ... </k>
     
 ```
 
@@ -251,7 +252,15 @@ Reserve a location in `store` for the variable, and put the initial value on top
         <k> locate(X:Id) => L ...</k>
         <env> ... X |-> L ... </env>
 ```
+### Increment/Decrement
 
+Can be seen as sugar for assignment. 
+```k
+    rule 
+        <k> ( E ++ ; ) => ( E = E + 1 ;) ... </k>
+    rule 
+        <k> ( E -- ; ) => ( E = E - 1 ;) ... </k>
+```
 ### Control flow
 
 ```k

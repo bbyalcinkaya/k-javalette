@@ -5,16 +5,17 @@ requires "../core/javalette-syntax-core.md"
 module JAVALETTE-ARRAYS-SYNTAX
     imports JAVALETTE-SYNTAX-CORE
 
-    syntax Type ::= Type "[" "]"
+    syntax TypBox ::= r"\\[[ \\n\\t]*\\]" [token]
+    syntax Type ::= Type TypBox [macro]
+
+    syntax Exp ::= "new" Type Boxes      [unary]
+                 | Exp Box               [funcall]
+                 | Exp "." Id            [strict(1), unary]
 
     syntax Id ::= "length" [token]
-    
-    syntax Exp ::= "new" Type Boxes             [literal]
-                 | Exp "[" Exp "]"              [seqstrict, funcall]
-                 | Exp "." Id                   [strict(1), funcall]
-    
+
     // array size
-    syntax Box ::= "[" Exp "]"
+    syntax Box ::= "[" Exp "]"              [strict]
     syntax Boxes ::= NeList{Box, ""}
 
     syntax Stmt ::= "for" "(" Type Id ":" Exp ")" Stmt [strict(3)]
@@ -27,21 +28,23 @@ module JAVALETTE-ARRAYS
     imports JAVALETTE-EXECUTION
     imports JAVALETTE-RETURNCHECK
 
-    rule validDataType(T []) => validDataType(T)
+    syntax Type ::= "#arrayOf" "(" Type ")"
+    rule T _:TypBox => #arrayOf(T)
+    
+    rule validDataType(#arrayOf(T)) => validDataType(T)
 
     rule inferExp(new T .Boxes) => T
     rule inferExp(new T [E] Bs) => arrayOf(inferExp(new T Bs))
         requires checkExp(int, E)
 
     syntax InferRes ::= arrayOf(InferRes) [function,functional]
-    rule arrayOf(T:Type) => T[]
+    rule arrayOf(T:Type) => #arrayOf(T)
     rule arrayOf(#typeError) => #typeError
-    
+
     rule inferExp(E . length) => int requires isArray(inferExp(E))
-    rule inferExp(_ . _:Id) => #typeError [owise]
     
     syntax Bool ::= isArray(InferRes) [function,functional]
-    rule isArray(_:Type []) => true
+    rule isArray(#arrayOf(_)) => true
     rule isArray(_) => false [owise]
     
     rule isLValue(_:Exp [_]) => true    // array index
@@ -50,7 +53,7 @@ module JAVALETTE-ARRAYS
 
     rule inferExp( Arr [ Ix ] ) => arrayElement(inferExp(Arr)) requires checkExp(int, Ix)
     syntax InferRes ::= arrayElement(InferRes) [function, functional]
-    rule arrayElement(T []) => T
+    rule arrayElement( #arrayOf(T) ) => T
     rule arrayElement(_) => #typeError [owise]
 
     rule
@@ -60,7 +63,7 @@ module JAVALETTE-ARRAYS
                 twithBlock( Body )
             ) ... 
         </tcode>
-        requires checkExp(T[], Arr)
+        requires checkExp(#arrayOf(T), Arr)
 ```
 ## Creating arrays
 ```k
@@ -92,8 +95,11 @@ module JAVALETTE-ARRAYS
 
 ## Element access
 ```k
+    syntax Exp ::= "#elemAccess" "(" Exp "," Exp ")" [seqstrict]
+    rule <k> (Arr:Exp ([Ix]):Box ):Exp => #elemAccess(Arr,Ix) ... </k>
+    
     rule 
-        <k> array(Loc, Len) [ Ix:Int ] => X ...</k>
+        <k> #elemAccess(array(Loc, Len), Ix) => X ...</k>
         <store> ... (Loc +Int Ix ) |-> X ... </store>
         requires Len >Int Ix
 ```
@@ -120,7 +126,7 @@ Evaluate `Boxes` to `Values`
     rule <k> V:Value ~> evalBoxesTail(Bs) => Bs ~> evalBoxesHead(V) ... </k>
     rule <k> Vs:Values ~> evalBoxesHead(V) => (V, Vs):Values ... </k>
     
-    rule defaultValue(_:Type []) => array(0,0)
+    rule defaultValue( #arrayOf(_) ) => array(0,0)
 ```
 
 ## For loops
@@ -157,7 +163,7 @@ For-loops are strict on the `Range` expression, so it is evaluated only once and
 
 ```k
     rule isLValue(newArray(_,_)) => false
-    rule isLValue(_ . _:Id) => false      [owise]
+    rule isLValue(_ . length) => false      [owise]
 
     rule retcheckStmt(for(_ _ : _)_) => false
 ```
@@ -165,6 +171,6 @@ For-loops are strict on the `Range` expression, so it is evaluated only once and
 
 Arrays do not support equality (`==` or `!=`) operators.
 ```k
-    rule isEquality(_:Type []) => false
+    rule isEquality( #arrayOf(_) ) => false
 endmodule
 ```

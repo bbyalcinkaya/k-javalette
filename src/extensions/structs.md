@@ -17,8 +17,8 @@ module JAVALETTE-STRUCTS-SYNTAX
 
     syntax Type ::= Id
 
-    syntax Exp ::= Exp "->" Id   [strict(1), funcall]
-                 | "new" Id    [funcall]
+    syntax Exp ::= Exp "->" Id              [strict(1), funcall]
+                 | "new" Id                 [unary]
                  | "(" Id ")" "null"        [literal]
                   
 endmodule
@@ -191,6 +191,10 @@ Check function types:
     rule
         <k> struct(SName, Loc) -> F => ST[Loc +Int findOffset(SName, F)] ...</k>
         <store> ST </store>
+
+    syntax KItem ::= "#nullptr-exception"
+    rule
+        <k> #nullptr -> _ => #nullptr-exception ...</k>
 ```
 
 ### Comparison operators
@@ -223,7 +227,13 @@ Check function types:
         
         </k>
 
-
+    rule 
+        <k> 
+            locateField(#nullptr, _) => #nullptr-exception
+            ... 
+        
+        </k>
+    
 ```
 
 

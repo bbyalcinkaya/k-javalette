@@ -23,7 +23,9 @@ module JAVALETTE-IO
     
 
     syntax K ::= writeln(String)    [function]
+    syntax K ::= writeln(String, Int)    [function]
     rule writeln(S) => #write(#stdout, S +String "\n")
+    rule writeln(S, FD) => #write(FD, S +String "\n")
     
     rule getStdinStringH(C:String) => C +String getStdinStringH( #read( #stdin , 1 ) )
         requires findChar(C, " \t\n", 0) ==Int -1
@@ -44,9 +46,9 @@ module JAVALETTE-IO
     syntax Int ::= fDoubleL(Float) [function,functional,private]
                  | fDoubleR(Float) [function,functional,private]
                  | fDoubleT(Int) [function,functional,private]
-    rule formatDouble(D) => Int2String(fDoubleL(D)) +String "." +String Int2String(fDoubleR(D))
-    rule fDoubleL(D) => Float2Int(floorFloat(D *Float 10000.0)) /Int 10000
-    rule fDoubleR(D) => fDoubleT(Float2Int(floorFloat(D *Float 10000.0)) %Int 10000)
+    rule formatDouble(D) => Int2String(fDoubleL(D)) +String "." +String Int2String(absInt(fDoubleR(D)))
+    rule fDoubleL(D) => Float2Int(floorFloat(D *Float 10.0)) /Int 10
+    rule fDoubleR(D) => fDoubleT(Float2Int(floorFloat(D *Float 10.0)) %Int 10)
     
     rule fDoubleT(0) => 0
     rule fDoubleT(I) => fDoubleT(I /Int 10) requires (I %Int 10) ==Int 0
