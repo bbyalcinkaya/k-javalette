@@ -6,11 +6,11 @@ build:
 		bash makejlc
 
 builddebug:
-		kompile src/javalette.md -w all -v --debug --directory . --backend haskell
+		kompile src/javalette.md -w all -v --directory . -O2 --debug --gen-bison-parser
 
+haskell:
+		kompile src/javalette.md -w all -v --directory . --debug --backend haskell
 
-test:
-		./test-typecheck.sh	
 
 clean:
 		rm -r .kompile* .kparse* javalette-kompiled
