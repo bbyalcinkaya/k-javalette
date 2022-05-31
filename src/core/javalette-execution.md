@@ -230,10 +230,11 @@ Reserve a location in `store` for the variable, and put the initial value on top
             T V; ~> T V2 , Vs ; ... 
         </k>         [structural]
     
-    syntax Value ::= defaultValue(Type) [function]
-    rule defaultValue(int) => 0
-    rule defaultValue(double) => 0.0
+    syntax Value ::= defaultValue(Type) [function,functional]
+    rule defaultValue(int)     => 0
+    rule defaultValue(double)  => 0.0
     rule defaultValue(boolean) => false
+    rule defaultValue(void)    => nothing
 ```
 
 ### Assignment
