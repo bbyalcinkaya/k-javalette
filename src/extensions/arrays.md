@@ -6,7 +6,7 @@ module JAVALETTE-ARRAYS-SYNTAX
     imports JAVALETTE-SYNTAX-CORE
 
     syntax TypBox ::= r"\\[[ \\n\\t]*\\]" [token]
-    syntax Type ::= Type TypBox [macro]
+    syntax Type ::= Type TypBox
 
     syntax Exp ::= "new" Type Boxes      [unary]
                  | Exp Box               [funcall]
@@ -28,25 +28,23 @@ module JAVALETTE-ARRAYS
     imports JAVALETTE-EXECUTION
     imports JAVALETTE-RETURNCHECK
 
-    syntax Type ::= "#arrayOf" "(" Type ")"
-    rule T _:TypBox => #arrayOf(T)
-    
-    rule validDataType(#arrayOf(T)) => validDataType(T)
 
-    rule equalType(#arrayOf(T1), #arrayOf(T2)) => equalType(T1, T2)
+    rule validDataType(T _:TypBox) => validDataType(T)
+
+    rule equalType(T1 _:TypBox, T2 _:TypBox) => equalType(T1, T2)
 
     rule inferExp(new T .Boxes) => T
     rule inferExp(new T [E] Bs) => arrayOf(inferExp(new T Bs))
         requires checkExp(int, E)
 
     syntax InferRes ::= arrayOf(InferRes) [function,functional]
-    rule arrayOf(T:Type) => #arrayOf(T)
+    rule arrayOf(T:Type) => T []
     rule arrayOf(#typeError) => #typeError
 
     rule inferExp(E . length) => int requires isArray(inferExp(E))
     
     syntax Bool ::= isArray(InferRes) [function,functional]
-    rule isArray(#arrayOf(_)) => true
+    rule isArray(_:Type _:TypBox) => true
     rule isArray(_) => false [owise]
     
     rule isLValue(_:Exp [_]) => true    // array index
@@ -55,7 +53,7 @@ module JAVALETTE-ARRAYS
 
     rule inferExp( Arr [ Ix ] ) => arrayElement(inferExp(Arr)) requires checkExp(int, Ix)
     syntax InferRes ::= arrayElement(InferRes) [function, functional]
-    rule arrayElement( #arrayOf(T) ) => T
+    rule arrayElement( T _:TypBox ) => T
     rule arrayElement(_) => #typeError [owise]
 
     rule
@@ -65,7 +63,7 @@ module JAVALETTE-ARRAYS
                 twithBlock( Body )
             ) ... 
         </tcode>
-        requires checkExp(#arrayOf(T), Arr)
+        requires checkExp(T [], Arr)
 ```
 ## Creating arrays
 ```k
@@ -128,7 +126,7 @@ Evaluate `Boxes` to `Values`
     rule <k> V:Value ~> evalBoxesTail(Bs) => Bs ~> evalBoxesHead(V) ... </k>
     rule <k> Vs:Values ~> evalBoxesHead(V) => (V, Vs):Values ... </k>
     
-    rule defaultValue( #arrayOf(_) ) => array(0,0)
+    rule defaultValue( _:Type _:TypBox ) => array(0,0)
 ```
 
 ## For loops
@@ -173,6 +171,6 @@ For-loops are strict on the `Range` expression, so it is evaluated only once and
 
 Arrays do not support equality (`==` or `!=`) operators.
 ```k
-    rule isEquality( #arrayOf(_) ) => false
+    rule isEquality( _:Type _:TypBox ) => false
 endmodule
 ```
