@@ -33,6 +33,8 @@ module JAVALETTE-ARRAYS
     
     rule validDataType(#arrayOf(T)) => validDataType(T)
 
+    rule equalType(#arrayOf(T1), #arrayOf(T2)) => equalType(T1, T2)
+
     rule inferExp(new T .Boxes) => T
     rule inferExp(new T [E] Bs) => arrayOf(inferExp(new T Bs))
         requires checkExp(int, E)

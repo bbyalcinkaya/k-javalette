@@ -33,8 +33,8 @@ module RANDOMIZE
     syntax Int ::= catch(IOInt) [function]
     rule catch(I:Int) => I
 
-    rule <k> readInt() => #logInt(jlRandomInt()) ... </k> [priority(49)]
-    rule <k> readDouble() => #logFloat(jlRandomDouble()) ... </k> [priority(49)]
+    rule <k> readInt(.Args) => #logInt(jlRandomInt()) ... </k> [priority(49)]
+    rule <k> readDouble(.Args) => #logFloat(jlRandomDouble()) ... </k> [priority(49)]
     
 
     syntax KItem ::= #logInt(Int)

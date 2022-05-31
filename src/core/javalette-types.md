@@ -252,9 +252,7 @@ Inferred type must match the expected type.
 ```k
     syntax Bool ::= equalType(InferRes, InferRes) [function, functional]
     rule equalType(T1:Type, T2:Type)       => true requires T1 ==K T2
-    rule equalType(_:Type, #typeError)     => false
-    rule equalType(#typeError, _:Type)     => false
-    rule equalType(#typeError, #typeError) => false
+    rule equalType(_, _)                   => false [owise]
     
     syntax Bool ::= checkExp(InferRes, Exp) [function, functional]
     rule checkExp( T:Type, E ) => equalType(T, inferExp(E))
