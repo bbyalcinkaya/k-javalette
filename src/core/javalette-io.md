@@ -14,7 +14,7 @@ module JAVALETTE-IO
                     | getStdinStringS( IOString )    [function, private]
                     | getStdinStringH( IOString )    [function, private]
     
-    rule getStdinString( ) => getStdinStringS( #read( #stdin , 1 ) )     [structual]
+    rule getStdinString( ) => getStdinStringS( #read( #stdin , 1 ) )     [structural]
     
     rule getStdinStringS(C:String) => getStdinStringS(#read( #stdin , 1 ) ) 
         requires findChar(C, " \t\n", 0) =/=Int -1
