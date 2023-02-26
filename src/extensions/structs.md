@@ -61,15 +61,15 @@ module JAVALETTE-STRUCTS
     
     
 
-    syntax Bool ::= uniqueFields(FieldDefs) [function,functional]
-                  | uniqueFieldsH(Set, FieldDefs) [function,functional]
+    syntax Bool ::= uniqueFields(FieldDefs) [function,total]
+                  | uniqueFieldsH(Set, FieldDefs) [function,total]
     rule uniqueFields(FDs) => uniqueFieldsH(.Set, FDs)
     rule uniqueFieldsH(_, .FieldDefs) => true
     rule uniqueFieldsH(S, (_ I;) Rest) => notBool(I in S) 
                                           andBool uniqueFieldsH(SetItem(I) S, Rest)
 
-    syntax Map ::= structMap(FieldDefs) [function,functional]
-                 | structMapH(Map,Int,FieldDefs) [function,functional]
+    syntax Map ::= structMap(FieldDefs) [function,total]
+                 | structMapH(Map,Int,FieldDefs) [function,total]
     rule structMap(FDs) => structMapH(.Map,0,FDs)
     rule structMapH(M,_,.FieldDefs) => M
     rule structMapH(M,I,(T F;) Rest) => structMapH(M (F |-> fpair(T,I)), I +Int 1, Rest)
@@ -102,7 +102,7 @@ Struct fields must have valid types. If the type is an identifier, there must be
         <tcode> struct _SName { Fields }; => . ... </tcode>
         requires validFields(Fields)
 
-    syntax Bool ::= validFields(FieldDefs) [function,functional]
+    syntax Bool ::= validFields(FieldDefs) [function,total]
     rule validFields(.FieldDefs) => true
     rule validFields((T _;) FDs) => validDataType(T) andBool validFields(FDs)
 
@@ -136,7 +136,7 @@ Check function types:
 
     rule inferExp(E -> F) => inferField(inferExp(E), F)
 
-    syntax InferRes ::= inferField(InferRes, Id) [function,functional]
+    syntax InferRes ::= inferField(InferRes, Id) [function,total]
     
     rule [[ inferField(TName:Id, F) => inferField(#ptr(SName), F) ]]
         <typedefs> ... TName |-> SName ... </typedefs> 

@@ -37,13 +37,13 @@ module JAVALETTE-ARRAYS
     rule inferExp(new T [E] Bs) => arrayOf(inferExp(new T Bs))
         requires checkExp(int, E)
 
-    syntax InferRes ::= arrayOf(InferRes) [function,functional]
+    syntax InferRes ::= arrayOf(InferRes) [function,total]
     rule arrayOf(T:Type) => T []
     rule arrayOf(#typeError) => #typeError
 
     rule inferExp(E . length) => int requires isArray(inferExp(E))
     
-    syntax Bool ::= isArray(InferRes) [function,functional]
+    syntax Bool ::= isArray(InferRes) [function,total]
     rule isArray(_:Type _:TypBox) => true
     rule isArray(_) => false [owise]
     
@@ -52,7 +52,7 @@ module JAVALETTE-ARRAYS
     rule isLValue(new _ _:Boxes) => false
 
     rule inferExp( Arr [ Ix ] ) => arrayElement(inferExp(Arr)) requires checkExp(int, Ix)
-    syntax InferRes ::= arrayElement(InferRes) [function, functional]
+    syntax InferRes ::= arrayElement(InferRes) [function, total]
     rule arrayElement( T _:TypBox ) => T
     rule arrayElement(_) => #typeError [owise]
 

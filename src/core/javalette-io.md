@@ -42,10 +42,10 @@ module JAVALETTE-IO
 
     
 
-    syntax String ::= formatDouble(Float) [function,functional]
-    syntax Int ::= fDoubleL(Float) [function,functional,private]
-                 | fDoubleR(Float) [function,functional,private]
-                 | fDoubleT(Int) [function,functional,private]
+    syntax String ::= formatDouble(Float) [function,total]
+    syntax Int ::= fDoubleL(Float) [function,total,private]
+                 | fDoubleR(Float) [function,total,private]
+                 | fDoubleT(Int) [function,total,private]
     rule formatDouble(D) => Int2String(fDoubleL(D)) +String "." +String Int2String(absInt(fDoubleR(D)))
     rule fDoubleL(D) => Float2Int(floorFloat(D *Float 10.0)) /Int 10
     rule fDoubleR(D) => fDoubleT(Float2Int(floorFloat(D *Float 10.0)) %Int 10)
