@@ -43,7 +43,7 @@ module JAVALETTE-TYPES
 ## Valid data types
 
 ```k
-    syntax Bool ::= validDataType(Type) [function,functional]
+    syntax Bool ::= validDataType(Type) [function,total]
     rule validDataType(int) => true
     rule validDataType(double) => true
     rule validDataType(boolean) => true
@@ -52,7 +52,7 @@ module JAVALETTE-TYPES
 ## Built-in functions
 
 ```k
-    syntax Set ::= "builtinFuns" [function, functional]
+    syntax Set ::= "builtinFuns" [function, total]
     rule builtinFuns => SetItem("readInt") SetItem("readDouble") SetItem("printInt") SetItem("printDouble") SetItem("printString")
 ```
 
@@ -70,8 +70,8 @@ Initialize the environment (`tenv`) with parameters and check the function body.
             notBool(FName in builtinFuns  )
             andBool validParams(Ps)
     
-    syntax Bool ::= validParams( Params ) [function,functional]
-                  | validParamsH( Params, Map ) [function,functional]
+    syntax Bool ::= validParams( Params ) [function,total]
+                  | validParamsH( Params, Map ) [function,total]
     rule validParams(Ps) => validParamsH(Ps, .Map)
     rule validParamsH(.Params, _) => true 
     rule validParamsH((T V, Ps), M) => 
@@ -79,8 +79,8 @@ Initialize the environment (`tenv`) with parameters and check the function body.
         notBool(V in_keys(M)) andBool
         validParamsH(Ps, M[V <- T])
     
-    syntax Map ::= paramMap(Params) [function, functional]
-                 | paramMapH(Params, Map) [function, functional]
+    syntax Map ::= paramMap(Params) [function, total]
+                 | paramMapH(Params, Map) [function, total]
     rule paramMap(Ps) => paramMapH(Ps, .Map) 
     rule paramMapH( .Params , Acc ) => Acc 
     rule paramMapH( (T:Type V:Id , Ps:Params) , Acc:Map ) 
@@ -162,7 +162,7 @@ When an initial value is provided, type of the expression must match the variabl
                 andBool isLValue( V )
     
     // Do not use [owise] rules
-    syntax Bool ::= isLValue(Exp) [function,functional]
+    syntax Bool ::= isLValue(Exp) [function,total]
     rule isLValue(_:Id) => true         // variable
     rule isLValue(_:Bool) => false
     rule isLValue(_:Int) => false
@@ -250,16 +250,16 @@ The expression must be a `void` expression.
 Inferred type must match the expected type.
 
 ```k
-    syntax Bool ::= equalType(InferRes, InferRes) [function, functional]
+    syntax Bool ::= equalType(InferRes, InferRes) [function, total]
     rule equalType(T1:Type, T2:Type)       => true requires T1 ==K T2
     rule equalType(_, _)                   => false [owise]
     
-    syntax Bool ::= checkExp(InferRes, Exp) [function, functional]
+    syntax Bool ::= checkExp(InferRes, Exp) [function, total]
     rule checkExp( T:Type, E ) => equalType(T, inferExp(E))
     rule checkExp( #typeError, _ ) => false
     
     syntax InferRes ::= Type | "#typeError"
-    syntax InferRes ::= inferExp(Exp) [function, functional]
+    syntax InferRes ::= inferExp(Exp) [function, total]
     
     rule inferExp(_) => #typeError [owise]
 ```
@@ -298,7 +298,7 @@ Lookup the variable's name in the environment.
     rule [[ inferExp(Fun:Id  ( As:Args ) )  => T ]]
         <funs> ... Fun |-> (T:Type _:Id ( Ps:Params ) _ ) ... </funs> requires checkArgs(As, Ps)
     
-    syntax Bool ::= checkArgs(Args, Params) [function, functional]
+    syntax Bool ::= checkArgs(Args, Params) [function, total]
     rule checkArgs(.Args, .Params)       => true 
     rule checkArgs((A, As), ((T _), Ps)) => checkArgs(As, Ps) requires checkExp(T, A) 
     // OTHERWISE : type mismatch or invalid number of args
@@ -322,7 +322,7 @@ Operands must be of the same numeric type.
     rule inferExp( E1:Exp / E2:Exp ) => inferArith(inferExp(E1), E2)
     rule inferExp( E1:Exp * E2:Exp ) => inferArith(inferExp(E1), E2)
     
-    syntax InferRes ::= inferArith(InferRes, Exp) [function, functional]
+    syntax InferRes ::= inferArith(InferRes, Exp) [function, total]
     rule inferArith(T:Type, E2:Exp) => T requires isNumeric(T) andBool checkExp(T, E2)
     rule inferArith(#typeError, _) => #typeError
 ```
@@ -338,7 +338,7 @@ Operands must be of the same numeric type.
     rule inferExp( E1:Exp == E2:Exp ) => inferEq(inferExp(E1), E2)
     rule inferExp( E1:Exp != E2:Exp ) => inferEq(inferExp(E1), E2)
     
-    syntax InferRes ::= inferEq(InferRes, Exp) [function, functional]
+    syntax InferRes ::= inferEq(InferRes, Exp) [function, total]
     rule inferEq(T:Type, Other:Exp) => boolean requires isEquality(T)
                                                 andBool checkExp(T, Other)
     rule inferEq(#typeError, _) => #typeError
@@ -348,7 +348,7 @@ Operands must be of the same numeric type.
     rule inferExp( E1:Exp <= E2:Exp ) => inferOrd(inferExp(E1), E2)
     rule inferExp( E1:Exp <  E2:Exp ) => inferOrd(inferExp(E1), E2)
     
-    syntax InferRes ::= inferOrd(InferRes, Exp) [function, functional]
+    syntax InferRes ::= inferOrd(InferRes, Exp) [function, total]
     rule inferOrd(T:Type, Other:Exp) => boolean requires isNumeric(T)
                                                             andBool checkExp(T, Other)
     rule inferOrd(#typeError, _) => #typeError
@@ -368,16 +368,16 @@ Operands must be of the same numeric type.
 ### Helper functions
 
 ```k 
-    syntax InferRes ::= mustBeNumeric(InferRes) [function, functional]
+    syntax InferRes ::= mustBeNumeric(InferRes) [function, total]
     rule mustBeNumeric(T:Type) => T requires isNumeric(T)
     rule mustBeNumeric(#typeError) => #typeError
 
-    syntax Bool ::= isNumeric(InferRes) [function, functional]
+    syntax Bool ::= isNumeric(InferRes) [function, total]
     rule isNumeric(int)    => true
     rule isNumeric(double) => true
     rule isNumeric(_) => false      [owise]
 
-    syntax Bool ::= isEquality(InferRes) [function, functional]
+    syntax Bool ::= isEquality(InferRes) [function, total]
     rule isEquality(int)     => true
     rule isEquality(double)  => true
     rule isEquality(boolean) => true

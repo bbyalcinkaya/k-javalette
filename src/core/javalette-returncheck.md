@@ -15,21 +15,21 @@ module JAVALETTE-RETURNCHECK
          <program> Prg </program>
          requires retcheckProgram(Prg)
     
-    syntax Bool ::= retcheckProgram(Program) [function, functional]
+    syntax Bool ::= retcheckProgram(Program) [function, total]
     rule retcheckProgram(.Program) => true
     rule retcheckProgram(F:TopDef Rest) => retcheckTopDef(F) andBool retcheckProgram(Rest)
     
-    syntax Bool ::= retcheckTopDef(TopDef) [function, functional]
+    syntax Bool ::= retcheckTopDef(TopDef) [function, total]
     rule retcheckTopDef(FD:FunDef) => retcheckFunDef(FD)
 
-    syntax Bool ::= retcheckFunDef(FunDef) [function, functional]
+    syntax Bool ::= retcheckFunDef(FunDef) [function, total]
     rule retcheckFunDef(T _ (_) { Body }) => (T ==K void) orBool retcheckStmts(Body)
 
-    syntax Bool ::= retcheckStmts(Stmts) [function, functional]
+    syntax Bool ::= retcheckStmts(Stmts) [function, total]
     rule retcheckStmts(.Stmts) => false
     rule retcheckStmts(S Ss) => retcheckStmt(S) orBool retcheckStmts(Ss) 
 
-    syntax Bool ::= retcheckStmt(Stmt) [function, functional]
+    syntax Bool ::= retcheckStmt(Stmt) [function, total]
     rule retcheckStmt(return _;) => true
     rule retcheckStmt(return;)   => true
     
